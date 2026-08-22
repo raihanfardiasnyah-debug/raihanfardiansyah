@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<title>Presensi OTA 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.js';document.head.appendChild(s);"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js';document.head.appendChild(s);"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --navy:#0A2A43;
+  --ocean:#0F5C97;
+  --sky:#4FB3E8;
+  --foam:#F1F7FC;
+  --white:#FFFFFF;
+  --ink:#0A2A43;
+  --line:#D7E6F2;
+  --good:#1F9D6B;
+  --warn:#C97A2B;
+  --shadow: 0 10px 30px -12px rgba(10,42,67,0.25);
+  --radius: 18px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'IBM Plex Sans',system-ui,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 100% -10%, rgba(79,179,232,0.18), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(15,92,151,0.15), transparent 55%),
+    var(--foam);
+  color:var(--ink);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:'IBM Plex Mono',monospace;}
+.stencil{font-family:'Big Shoulders Stencil',sans-serif; font-weight:800; letter-spacing:0.02em;}
+#app{max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; position:relative;}
+
+.topbar{background:linear-gradient(135deg, var(--navy), var(--ocean)); color:var(--white); padding:18px 20px 26px; position:relative; overflow:hidden;}
+.topbar::after{content:""; position:absolute; left:0; right:0; bottom:-1px; height:22px; background:radial-gradient(circle at 10px 0, transparent 12px, var(--foam) 13px) 0 -2px/24px 24px repeat-x;}
+.topbar-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.brand{display:flex; align-items:center; gap:10px;}
+.brand-badge{width:38px; height:38px; border-radius:10px; background:rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid rgba(255,255,255,0.25);}
+.brand-title{font-size:11px; letter-spacing:0.14em; text-transform:uppercase; opacity:0.85; margin:0;}
+.brand-sub{font-size:19px; font-weight:700; margin:0; line-height:1.15;}
+.back-btn{background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.3); color:var(--white); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px;}
+.back-btn:active{background:rgba(255,255,255,0.25);}
+.eyebrow{font-size:11px; letter-spacing:0.16em; text-transform:uppercase; opacity:0.8; margin:14px 0 2px;}
+.screen-title{font-size:26px; margin:0; font-weight:800;}
+
+.content{flex:1; padding:22px 20px 100px;}
+.card{background:var(--white); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); border:1px solid var(--line); margin-bottom:14px;}
+.role-grid{display:flex; flex-direction:column; gap:14px; margin-top:6px;}
+.role-card{display:flex; align-items:center; gap:14px; background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:16px; cursor:pointer; box-shadow:var(--shadow); text-align:left; width:100%; transition:transform .15s ease; position:relative; overflow:hidden;}
+.role-card:active{transform:scale(0.98);}
+.role-card::before{content:""; position:absolute; left:0; top:0; bottom:0; width:6px; background:var(--ocean);}
+.role-icon{width:52px; height:52px; border-radius:14px; background:var(--foam); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:24px; border:1px solid var(--line);}
+.role-text h3{margin:0 0 3px; font-size:17px; font-weight:700;}
+.role-text p{margin:0; font-size:13px; color:#5C7B94;}
+.role-arrow{margin-left:auto; color:var(--ocean); font-size:20px;}
+
+.section-label{font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ocean); font-weight:600; margin:0 0 10px;}
+.chip-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.chip{background:var(--white); border:1.5px solid var(--line); border-radius:14px; padding:14px 12px; text-align:left; cursor:pointer; display:flex; flex-direction:column; gap:6px;}
+.chip:active{transform:scale(0.97);}
+.chip.selected{border-color:var(--ocean); background:linear-gradient(135deg,#EAF5FD,#F1F7FC);}
+.chip-code{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ocean); font-weight:600;}
+.chip-name{font-size:14px; font-weight:600; line-height:1.25;}
+.chip-count{font-size:11px; color:#7591A8;}
+
+.activity-list{display:flex; flex-direction:column; gap:10px;}
+.activity-row{display:flex; align-items:center; gap:12px; background:var(--white); border:1.5px solid var(--line); border-radius:14px; padding:14px; cursor:pointer;}
+.activity-row.selected{border-color:var(--ocean); background:#EAF5FD;}
+.activity-num{width:34px; height:34px; border-radius:50%; background:var(--navy); color:#fff; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; font-family:'IBM Plex Mono',monospace;}
+.activity-name{font-weight:600; font-size:15px;}
+.activity-sub{font-size:12px; color:#7591A8; margin-top:2px;}
+
+.search-box{display:flex; align-items:center; gap:8px; background:var(--white); border:1.5px solid var(--line); border-radius:14px; padding:10px 14px; margin-bottom:12px;}
+.search-box input{border:none; outline:none; flex:1; font-size:15px; font-family:inherit; background:transparent; min-width:0;}
+.search-box .sbtn{flex-shrink:0; padding:9px 16px; border-radius:10px; font-size:13px; font-weight:700; border:none; cursor:pointer; background:linear-gradient(135deg, var(--ocean), var(--navy)); color:#fff;}
+
+.student-list{display:flex; flex-direction:column; gap:8px; max-height:52vh; overflow-y:auto; padding-right:2px;}
+.student-row{display:flex; align-items:center; gap:10px; background:var(--white); border:1.5px solid var(--line); border-radius:14px; padding:11px 13px;}
+.student-row.done{opacity:0.6;}
+.student-id{font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:var(--white); background:var(--ocean); border-radius:8px; padding:5px 8px; flex-shrink:0; min-width:52px; text-align:center;}
+.student-row.done .student-id{background:var(--good);}
+.student-name{font-weight:600; font-size:14px; flex:1;}
+.student-status{font-size:11px; color:var(--good); font-weight:600; margin-right:2px; white-space:nowrap;}
+.icon-btn{width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; background:var(--foam); border:1px solid var(--line); color:var(--ocean); cursor:pointer; flex-shrink:0;}
+.mark-btn{width:auto; padding:7px 14px; border-radius:10px; font-size:12.5px; font-weight:700; border:1.5px solid var(--ocean); background:var(--white); color:var(--ocean); cursor:pointer; flex-shrink:0;}
+
+.summary-bar{display:flex; gap:10px; margin-bottom:14px;}
+.summary-pill{flex:1; background:var(--white); border:1px solid var(--line); border-radius:14px; padding:12px; text-align:center;}
+.summary-pill .num{font-size:22px; font-weight:800; font-family:'IBM Plex Mono',monospace; color:var(--navy);}
+.summary-pill .lbl{font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:#7591A8; margin-top:2px;}
+
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12px; font-weight:600; color:var(--navy); margin-bottom:6px;}
+.field input, .field select{width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--line); font-size:15px; font-family:inherit; outline:none; background:var(--white);}
+.field input:focus, .field select:focus{border-color:var(--ocean);}
+.field input[readonly]{background:var(--foam); color:#4A6B85;}
+
+.btn{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:15px; border-radius:14px; border:none; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit;}
+.btn-primary{background:linear-gradient(135deg, var(--ocean), var(--navy)); color:#fff; box-shadow:0 8px 20px -8px rgba(15,92,151,0.6);}
+.btn-primary:active{transform:scale(0.98);}
+.btn-secondary{background:var(--white); color:var(--ocean); border:1.5px solid var(--ocean);}
+.btn-ghost{background:transparent; color:var(--ocean); border:1.5px dashed var(--sky);}
+.btn:disabled{opacity:0.5; cursor:not-allowed;}
+.btn-row{display:flex; gap:10px;}
+.btn-row .btn{flex:1;}
+
+.ticket{background:var(--white); border-radius:20px; overflow:hidden; box-shadow:var(--shadow); border:1px solid var(--line); position:relative; margin-bottom:18px;}
+.ticket-top{background:linear-gradient(135deg, var(--navy), var(--ocean)); color:#fff; padding:20px; display:flex; align-items:center; gap:14px; position:relative;}
+.ticket-photo{width:64px; height:64px; border-radius:50%; border:3px solid rgba(255,255,255,0.6); object-fit:cover; background:rgba(255,255,255,0.15); flex-shrink:0;}
+.ticket-name{font-size:17px; font-weight:800; margin:0 0 2px;}
+.ticket-class{font-size:12px; opacity:0.85; font-family:'IBM Plex Mono',monospace;}
+.stamp{position:absolute; top:14px; right:16px; border:2.5px solid #4FE0A0; color:#4FE0A0; border-radius:8px; padding:4px 10px; font-family:'Big Shoulders Stencil',sans-serif; font-weight:800; font-size:14px; letter-spacing:0.08em; transform:rotate(8deg); background:rgba(79,224,160,0.08);}
+.perforation{height:0; border-top:2px dashed var(--line); position:relative; margin:0;}
+.perforation::before, .perforation::after{content:""; position:absolute; top:-9px; width:18px; height:18px; border-radius:50%; background:var(--foam);}
+.perforation::before{left:-9px;} .perforation::after{right:-9px;}
+.ticket-bottom{padding:18px 20px; display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.ticket-field .k{font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:#7591A8; margin-bottom:3px;}
+.ticket-field .v{font-size:14px; font-weight:700; font-family:'IBM Plex Mono',monospace;}
+
+.cam-overlay{position:fixed; inset:0; background:rgba(10,20,30,0.92); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;}
+.cam-frame{width:min(88vw,340px); aspect-ratio:3/4; border-radius:22px; overflow:hidden; background:#000; border:3px solid rgba(255,255,255,0.25); position:relative;}
+.cam-frame video, .cam-frame img{width:100%; height:100%; object-fit:cover;}
+.cam-controls{display:flex; gap:16px; margin-top:22px; align-items:center;}
+.cam-shutter{width:68px; height:68px; border-radius:50%; background:#fff; border:4px solid rgba(255,255,255,0.4); cursor:pointer;}
+.cam-btn-round{width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.35); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px;}
+.cam-hint{color:#fff; opacity:0.75; font-size:12px; margin-top:14px; text-align:center;}
+.scan-frame{width:100%; max-width:320px; aspect-ratio:3/4; border-radius:22px; overflow:hidden; background:#000; position:relative; margin:0 auto 14px; border:3px solid rgba(10,42,67,0.15);}
+.scan-frame video{width:100%; height:100%; object-fit:cover;}
+.scan-target{position:absolute; inset:14% 10%; border:3px solid rgba(255,255,255,0.8); border-radius:18px; pointer-events:none; box-shadow:0 0 0 999px rgba(0,0,0,0.25);}
+
+.empty-state{text-align:center; padding:40px 20px; color:#7591A8;}
+.empty-state .ic{font-size:40px; margin-bottom:10px;}
+.gallery{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+.gallery .g-item{border-radius:12px; overflow:hidden; aspect-ratio:1; position:relative; background:var(--foam); border:1px solid var(--line);}
+.gallery .g-item img{width:100%; height:100%; object-fit:cover;}
+.gallery .g-item .g-name{position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.7)); color:#fff; font-size:9px; padding:3px 5px; text-align:center; font-weight:600;}
+
+.toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--navy); color:#fff; padding:12px 20px; border-radius:30px; font-size:13px; font-weight:600; box-shadow:var(--shadow); z-index:200; max-width:88vw; text-align:center;}
+.loader{display:flex; align-items:center; justify-content:center; padding:30px; gap:10px; color:var(--ocean); font-weight:600; font-size:13px;}
+.spin{width:18px; height:18px; border:2.5px solid var(--line); border-top-color:var(--ocean); border-radius:50%; animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.tabbar{display:flex; gap:8px; margin-bottom:16px; background:var(--white); border:1px solid var(--line); border-radius:14px; padding:5px;}
+.tab{flex:1; text-align:center; padding:9px 6px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; color:#7591A8;}
+.tab.active{background:var(--ocean); color:#fff;}
+
+table.recap{width:100%; border-collapse:collapse; font-size:12.5px;}
+table.recap th{text-align:left; padding:8px 6px; color:#7591A8; font-weight:600; border-bottom:1.5px solid var(--line); font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em;}
+table.recap td{padding:9px 6px; border-bottom:1px solid var(--line);}
+.bar-bg{background:var(--foam); border-radius:6px; height:6px; width:100%; overflow:hidden; margin-top:4px;}
+.bar-fill{background:var(--ocean); height:100%; border-radius:6px;}
+
+.pass-input{display:flex; gap:8px; justify-content:center; margin:18px 0;}
+.pass-input input{width:46px; height:56px; text-align:center; font-size:22px; border-radius:12px; border:1.5px solid var(--line); font-family:'IBM Plex Mono',monospace; font-weight:700;}
+.footer-note{text-align:center; font-size:11px; color:#93A9BC; margin-top:18px; padding-bottom:6px;}
+.divider{height:1px; background:var(--line); margin:16px 0;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-thumb{background:var(--line); border-radius:10px;}
+@media (prefers-reduced-motion: reduce){ *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;} }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script id="students-data" type="application/json">{"TKJ1": {"label": "X TKJ 1", "students": [{"no": 1, "nama": "ABDUL FATAH JALALUDIN", "lp": "L"}, {"no": 2, "nama": "ACHMAD MUZAKI", "lp": "L"}, {"no": 3, "nama": "ACHMAD RIZKI ARJUNA PUTRA", "lp": "L"}, {"no": 4, "nama": "AISYAH HANA KURNIANTI", "lp": "P"}, {"no": 5, "nama": "ALVIANO MAHESA PUTRA", "lp": "L"}, {"no": 6, "nama": "ANANDA FARIS PRATAMA", "lp": "L"}, {"no": 7, "nama": "ANDIKA IBNI SYAHMI", "lp": "L"}, {"no": 8, "nama": "ARYAGUNA PRIYO ADYATMA", "lp": "L"}, {"no": 9, "nama": "BIMO MARCKO SATRIO", "lp": "L"}, {"no": 10, "nama": "EKA YOGA WIRYAWAN", "lp": "L"}, {"no": 11, "nama": "ESTYAWAN ARGO PAMBUDI", "lp": "P"}, {"no": 12, "nama": "HANIFA ARINDA SUBAKTI", "lp": "P"}, {"no": 13, "nama": "HEAVANZA REFANDITO AINURIFTIAN", "lp": "L"}, {"no": 14, "nama": "IRVIN MAULANA ROVANTIO", "lp": "L"}, {"no": 15, "nama": "KHAIRA BERLIANI AGATA", "lp": "L"}, {"no": 16, "nama": "KRESNA DIPANALA", "lp": "L"}, {"no": 17, "nama": "M FARDHAN VALIANSYAH KHARROZIM", "lp": "L"}, {"no": 18, "nama": "MOCH FAHRI KHUZAINI", "lp": "L"}, {"no": 19, "nama": "MOCHAMMAD DAMAR TRI ANGGORO SETYO", "lp": "L"}, {"no": 20, "nama": "MOHAMMAD ZUKHRUF LAIL ANDRIANSYAH", "lp": "L"}, {"no": 21, "nama": "MUHAMMAD ALFAKHRIE ISMAIL", "lp": "L"}, {"no": 22, "nama": "MUHAMMAD AZAM RIFQI HIDAYAT", "lp": "L"}, {"no": 23, "nama": "MUHAMMAD NIZAM AKBAR ARIFUDDIN", "lp": "L"}, {"no": 24, "nama": "MUHAMMAD ROHMAN PUTRA MAUNAH", "lp": "L"}, {"no": 25, "nama": "NASIATUL MUKAROMAH", "lp": "P"}, {"no": 26, "nama": "NAYLA LUTVIANA PUTRI", "lp": "P"}, {"no": 27, "nama": "PUTRA MARCELGIO ALBARA", "lp": "L"}, {"no": 28, "nama": "RAFA BACHTIAR HAMDY", "lp": "L"}, {"no": 29, "nama": "REYVITA PATRALINSKIA", "lp": "P"}, {"no": 30, "nama": "RIVIANA ALVIOMITA", "lp": "P"}, {"no": 31, "nama": "SASMITHA RATRI ATMADEWI", "lp": "P"}, {"no": 32, "nama": "SITI MAULIDAH RAMADHANI", "lp": "P"}, {"no": 33, "nama": "UCHIHA DONNY PEDROSA", "lp": "L"}, {"no": 34, "nama": "YOGA PRATAMA", "lp": "L"}, {"no": 35, "nama": "ZAHWA RAHMADANI PUTRI", "lp": "P"}]}, "TKJ2": {"label": "X TKJ 2", "students": [{"no": 1, "nama": "ACHMAD AKBAR JAKA KUSUMA", "lp": "L"}, {"no": 2, "nama": "ACHMAD RADITYA WIJAYA WIBISONO", "lp": "L"}, {"no": 3, "nama": "ADITYA ARRAYA SETIAWAN", "lp": "L"}, {"no": 4, "nama": "ALIF FITRA MAULANA", "lp": "L"}, {"no": 5, "nama": "ALVIN MILANELLO SUHARTANTO", "lp": "L"}, {"no": 6, "nama": "ANDIANI DWI RAMADHANI", "lp": "P"}, {"no": 7, "nama": "ANOUSKHA ACHRIN ZILVANA", "lp": "P"}, {"no": 8, "nama": "ASSYIFA NUR AISYAH RAMADHANI", "lp": "P"}, {"no": 9, "nama": "DEFFA PUTRA PRATAMA", "lp": "L"}, {"no": 10, "nama": "ELSA ZAHIRA AZ ZAHWA", "lp": "P"}, {"no": 11, "nama": "GHENDIS QORIDATUL ALDILA", "lp": "P"}, {"no": 12, "nama": "HANIYAH RENIESYA PUTRI", "lp": "P"}, {"no": 13, "nama": "IMKO JUNIOR BYANTAMA", "lp": "L"}, {"no": 14, "nama": "JIHAAN AQIILA HASNAA", "lp": "P"}, {"no": 15, "nama": "KIRANA PUTRI AYU LARASATI", "lp": "P"}, {"no": 16, "nama": "LANANG RAHA JUSTINE", "lp": "L"}, {"no": 17, "nama": "MARVIN RACHAFITRA RIZQULLAH", "lp": "L"}, {"no": 18, "nama": "MOCH. ARMANSYAH AL AKHIRI", "lp": "L"}, {"no": 19, "nama": "MOCHAMMAD YUNUS ALFIANSYAH PUTRA", "lp": "L"}, {"no": 20, "nama": "MUHAMAD RIFKY PUTRA ARIFIN", "lp": "L"}, {"no": 21, "nama": "MUHAMMAD ARKAN NAWWAF", "lp": "L"}, {"no": 22, "nama": "MUHAMMAD FAHRI ARIFIN PUTRA", "lp": "L"}, {"no": 23, "nama": "MUHAMMAD RIZKY AFIF", "lp": "L"}, {"no": 24, "nama": "NAFIL HAEDAR AL BARADO", "lp": "L"}, {"no": 25, "nama": "NAUVAL HISYAM KRISDIANTA", "lp": "L"}, {"no": 26, "nama": "PUTRA GONDO KANANTA LOKA", "lp": "L"}, {"no": 27, "nama": "RADITYA HILMY KURNIAWAN", "lp": "L"}, {"no": 28, "nama": "RAIHAN DZAKY WICAKSANA", "lp": "L"}, {"no": 29, "nama": "RIFQI AHMAD DWI ADITYA", "lp": "L"}, {"no": 30, "nama": "ROBY ALFIANSYAH", "lp": "L"}, {"no": 31, "nama": "SATRIA BHAKTI PERDANA", "lp": "L"}, {"no": 32, "nama": "THYZIA AUREL AQILA PUTRI", "lp": "P"}, {"no": 33, "nama": "VALENTINO DARIUS MISBAH MAHENDRA", "lp": "L"}, {"no": 34, "nama": "YUDA TRI WARDOYO", "lp": "L"}, {"no": 35, "nama": "ZIDAN BRAMANTYO", "lp": "L"}]}, "DRBK1": {"label": "X DRBK 1", "students": [{"no": 1, "nama": "ACHMAD ALBAR ZAKARIA", "lp": "L"}, {"no": 2, "nama": "ACHMAD RAFI ALAKBAR", "lp": "L"}, {"no": 3, "nama": "AHMAD AZIM ALVARIZI", "lp": "L"}, {"no": 4, "nama": "AKHMAD MUHYIDDIN MASHURI", "lp": "L"}, {"no": 5, "nama": "ANNISA AZZAHRA MAULIDIYAH", "lp": "P"}, {"no": 6, "nama": "ARYA KUSUMA WIJAYA", "lp": "L"}, {"no": 7, "nama": "AZZAHRA FIRDA FADHILLAH", "lp": "P"}, {"no": 8, "nama": "CYRINE NADIA", "lp": "P"}, {"no": 9, "nama": "ELVINO GALANG SAMPURNO", "lp": "L"}, {"no": 10, "nama": "GYOFANY ADITYA SAPUTRA", "lp": "L"}, {"no": 11, "nama": "HAFIDZ AMRULLAH AZZAKY", "lp": "L"}, {"no": 12, "nama": "HISYAM MUHAMMAD FAHRI", "lp": "L"}, {"no": 13, "nama": "INDAH KURNIA PUTRI SUCAHYO", "lp": "P"}, {"no": 14, "nama": "JAVIER ACHMAD SIRAJUDDIN", "lp": "L"}, {"no": 15, "nama": "KEVIN YUSUF FIDIANO", "lp": "L"}, {"no": 16, "nama": "MARSYAH CAHAYA IFTITAH", "lp": "L"}, {"no": 17, "nama": "MOCH FAIS SYAPUTRA", "lp": "L"}, {"no": 18, "nama": "MOCHAMAD RAFIANSYAH AL BAIHAQI", "lp": "L"}, {"no": 19, "nama": "MOCHAMMAD RAJU RAGIL PRASETYO", "lp": "L"}, {"no": 20, "nama": "MUCHAMMAD ARYA BRAMANTYO", "lp": "L"}, {"no": 21, "nama": "MUHAMMAD ALY WAFA SYAFI'I", "lp": "L"}, {"no": 22, "nama": "MUHAMMAD MAULANA IBRAHIM", "lp": "L"}, {"no": 23, "nama": "MUHAMMAD RICO SETIAWAN", "lp": "L"}, {"no": 24, "nama": "NAIESYAH FITRI ANGGRENI", "lp": "P"}, {"no": 25, "nama": "NAZWA PUTRI ELMIRA", "lp": "P"}, {"no": 26, "nama": "OCTAVIA AMRILLAH DEVI", "lp": "P"}, {"no": 27, "nama": "PUTRA FIRMANSYAH", "lp": "L"}, {"no": 28, "nama": "QUEEN MALIKA AYU FIRDAUSY", "lp": "L"}, {"no": 29, "nama": "RAFFI NIFLA PRATAMA FIRMANSYAH", "lp": "L"}, {"no": 30, "nama": "RAKHA GEOVANI BASTIAN", "lp": "L"}, {"no": 31, "nama": "RESTU PRASTIANSYAH DWI SABILLILAH", "lp": "P"}, {"no": 32, "nama": "RIZQI ADITYA DWI SYAHPUTRA", "lp": "L"}, {"no": 33, "nama": "VALEN MAULID DINA", "lp": "P"}, {"no": 34, "nama": "VITA YAHYA ANGGRAENI", "lp": "P"}, {"no": 35, "nama": "ZAKKI PEDHI LUMINTANG", "lp": "L"}]}, "DRBK2": {"label": "X DRBK 2", "students": [{"no": 1, "nama": "ACHMAD NUR ILHAM", "lp": "L"}, {"no": 2, "nama": "ACHMAD ZAINAL ABIDIN", "lp": "L"}, {"no": 3, "nama": "AJENG SABBRINA", "lp": "P"}, {"no": 4, "nama": "ANIVA ADELIA REYNATA", "lp": "P"}, {"no": 5, "nama": "ARSYA ZAKKI ANDHIKA RADITYA", "lp": "L"}, {"no": 6, "nama": "AYUNDA MALIKAH", "lp": "P"}, {"no": 7, "nama": "BREILYANT RIZQI WINATA", "lp": "P"}, {"no": 8, "nama": "DIVA NAADIRAH AZZAHRA", "lp": "P"}, {"no": 9, "nama": "ERLANGGA PAUL LASTYAN WARDHANA", "lp": "L"}, {"no": 10, "nama": "HABIBURRAUF WILDAN DIANTO", "lp": "L"}, {"no": 11, "nama": "HANDARU KAISAR WIRASENA", "lp": "L"}, {"no": 12, "nama": "IBRAHIMUSHAFIN AHMADINOV SUBIANTORO", "lp": "L"}, {"no": 13, "nama": "IRVIN FIRMAN DAMARIO", "lp": "L"}, {"no": 14, "nama": "KAYYISA AWWALIA RIDWAN", "lp": "L"}, {"no": 15, "nama": "MARIO JARDEL", "lp": "L"}, {"no": 16, "nama": "MEYSA PUTRI JASMINE", "lp": "P"}, {"no": 17, "nama": "MOCH THOMAS TAUFIQUL HAKIM", "lp": "L"}, {"no": 18, "nama": "MOCHAMAD VICKO RAMADHANI", "lp": "L"}, {"no": 19, "nama": "MOHAMAD SALMAN ALFARIZKI", "lp": "L"}, {"no": 20, "nama": "MUHAMMAD ALWAN FIROS", "lp": "L"}, {"no": 21, "nama": "MUHAMMAD ANWAR IBADUR RAHMAN", "lp": "L"}, {"no": 22, "nama": "MUHAMMAD RAFA RIEZKY RASENDRIYA", "lp": "L"}, {"no": 23, "nama": "MUKHAMMAD AUFA DIAN APRILIO", "lp": "L"}, {"no": 24, "nama": "NAURAH ATSILAH WARINDURI", "lp": "P"}, {"no": 25, "nama": "NIZAM PUTRA FARILIA", "lp": "L"}, {"no": 26, "nama": "PANJI ARYA PRANAJA MAHARDHIKA", "lp": "L"}, {"no": 27, "nama": "QARDY AZAN", "lp": "L"}, {"no": 28, "nama": "RAFA PUTRA DENYANSYAH", "lp": "L"}, {"no": 29, "nama": "RAFHA RAMADHAN WILLYAM", "lp": "L"}, {"no": 30, "nama": "RENATHA DWI KURNIAWAN", "lp": "P"}, {"no": 31, "nama": "RICHARDO WIJAYA SAPUTRA", "lp": "L"}, {"no": 32, "nama": "RYVIERO QALE SUWONDO", "lp": "L"}, {"no": 33, "nama": "VANESSA REVALINA RAMADHANI", "lp": "P"}, {"no": 34, "nama": "ZAHIRAH KANAYA ARTA PAUNDRA", "lp": "P"}, {"no": 35, "nama": "ZULHAM AHMAD IMRAN FARHANI", "lp": "L"}]}, "KKB1": {"label": "X KKB 1", "students": [{"no": 1, "nama": "ACH SELVANO RAMADHAN PRATAMA", "lp": "L"}, {"no": 2, "nama": "ACHMAD TANZIILAL PUTRA PURWANTO", "lp": "L"}, {"no": 3, "nama": "ADI FITROH LEGOWO", "lp": "L"}, {"no": 4, "nama": "AGIL PRIYANTO", "lp": "L"}, {"no": 5, "nama": "AHMAD GALANG SYARIFUDIN HIDAYAT", "lp": "L"}, {"no": 6, "nama": "AHMAD WIRA HIDAYATULLOH", "lp": "L"}, {"no": 7, "nama": "ANDITTA NAUFAL THORIQUL RAHMA", "lp": "L"}, {"no": 8, "nama": "AQSA RENALDI FIRDAUS", "lp": "L"}, {"no": 9, "nama": "BAGUS RUWANDHI", "lp": "L"}, {"no": 10, "nama": "BRAHMANA MANDALA PUTRA", "lp": "L"}, {"no": 11, "nama": "DIVO PUTRA ARDHANIS", "lp": "L"}, {"no": 12, "nama": "ENGGAR TIRTA SAPUTRA", "lp": "L"}, {"no": 13, "nama": "FADHIL RUSDIANSYAH", "lp": "L"}, {"no": 14, "nama": "HANIF ABHINAYA FAUZAN", "lp": "L"}, {"no": 15, "nama": "JAVAS GANGSAR MAHENDRA", "lp": "L"}, {"no": 16, "nama": "KELVIN JULIANO DERVYANSYAH", "lp": "L"}, {"no": 17, "nama": "LUTFI AQBIL HAKIM", "lp": "L"}, {"no": 18, "nama": "MAULANA XAVIER RIZQ", "lp": "L"}, {"no": 19, "nama": "MIFTAKHUL KHOIR WIDYA WIJAYA", "lp": "L"}, {"no": 20, "nama": "MOCHAMAD ANDRIANTO", "lp": "L"}, {"no": 21, "nama": "MOCHAMMAD MASHUDI AINUN ZULMI", "lp": "L"}, {"no": 22, "nama": "MOHAMMAD ARYA FIRMANSYAH", "lp": "L"}, {"no": 23, "nama": "MUCHAMMAD RAIHAN MAULANA", "lp": "L"}, {"no": 24, "nama": "MUHAMMAD AKBAR SHIROT AL ARSY", "lp": "L"}, {"no": 25, "nama": "MUHAMMAD HAFIDZ AWALUDDIN", "lp": "L"}, {"no": 26, "nama": "MUHAMMAD NASRULLAH ISMA", "lp": "L"}, {"no": 27, "nama": "MUHAMMAD YURIS ALVIANSYAH", "lp": "L"}, {"no": 28, "nama": "PHILIP VALENTINO DJIANTO", "lp": "L"}, {"no": 29, "nama": "RAKHA AHMAD ARKANANTA", "lp": "L"}, {"no": 30, "nama": "RASYA FEBRIAN", "lp": "L"}, {"no": 31, "nama": "RHAMADHANTA DARYEL ARRUQOT", "lp": "L"}, {"no": 32, "nama": "RICO OKTAFRIO KAHARDI", "lp": "L"}, {"no": 33, "nama": "RIO BAGUS NOVIANDI", "lp": "L"}, {"no": 34, "nama": "SATRIA PUTRA OKTAVIANO", "lp": "L"}, {"no": 35, "nama": "TEGAR NOVA RIZKI AWAN", "lp": "L"}]}, "KKB2": {"label": "X KKB 2", "students": [{"no": 1, "nama": "ACHMAD RIFQI MAULUDDIN", "lp": "L"}, {"no": 2, "nama": "ADELIO PITO ANANDA LISTIAR", "lp": "L"}, {"no": 3, "nama": "ADRIAN PUTRA FAUZAN", "lp": "L"}, {"no": 4, "nama": "AHMAD ATHALLAH ZHARIFAN", "lp": "L"}, {"no": 5, "nama": "AHMAD KHABIB ARDI ARROSYID", "lp": "L"}, {"no": 6, "nama": "ANDHIKA PUTRA PRATAMA", "lp": "L"}, {"no": 7, "nama": "APRILIYAN TRI PURNAMA PUTRA", "lp": "L"}, {"no": 8, "nama": "AXEL ALFARIZI", "lp": "L"}, {"no": 9, "nama": "BEVAN ABRISAM ALVARO", "lp": "L"}, {"no": 10, "nama": "DAVA ARDIANSYAH PUTRA PRATAMA", "lp": "L"}, {"no": 11, "nama": "DZAKA FAEYZA KURNIAWAN", "lp": "L"}, {"no": 12, "nama": "FADHIL FADLULLAH AFIF", "lp": "L"}, {"no": 13, "nama": "HABIBI FIRMANSYAH", "lp": "L"}, {"no": 14, "nama": "JAGAD BINTANG PAMUNGKAS", "lp": "L"}, {"no": 15, "nama": "JIMMY NOVAL ANDRIANA", "lp": "L"}, {"no": 16, "nama": "LIONEL ROSICKY", "lp": "L"}, {"no": 17, "nama": "MARVEL MARALAUT HERFRANSYAH", "lp": "L"}, {"no": 18, "nama": "MHAFIZH DZUL FADLY FAHREZA", "lp": "L"}, {"no": 19, "nama": "MOCH SYAHRUS ALVIANO", "lp": "L"}, {"no": 20, "nama": "MOCHAMAD DANAR RHOMADHON", "lp": "L"}, {"no": 21, "nama": "MOCHAMMAD REVANO PUTRA LUQMAWAR RIZKY", "lp": "L"}, {"no": 22, "nama": "MOHAMMAD TONY ANUGRAH AKBAR", "lp": "L"}, {"no": 23, "nama": "MUCHAMMAD WAHYU PRASETYO", "lp": "L"}, {"no": 24, "nama": "MUHAMMAD FARAND QOLBI", "lp": "L"}, {"no": 25, "nama": "MUHAMMAD HISYAM SAFI", "lp": "L"}, {"no": 26, "nama": "MUHAMMAD RESTU PRATAMA", "lp": "L"}, {"no": 27, "nama": "NACHA RENDI PRATAMA", "lp": "L"}, {"no": 28, "nama": "RACHMAD ALDI HERNAWAN", "lp": "L"}, {"no": 29, "nama": "RAMA ALWIDAN PERMANA", "lp": "L"}, {"no": 30, "nama": "REGA ACHMAD DHANI", "lp": "L"}, {"no": 31, "nama": "RICKY MAULANA ATHA RAHARJA", "lp": "L"}, {"no": 32, "nama": "RIFQI SYAHRU ROMADHONI", "lp": "L"}, {"no": 33, "nama": "SAKTA EGA BRATA", "lp": "L"}, {"no": 34, "nama": "SATRIYO GILANG SEPTIAN", "lp": "L"}, {"no": 35, "nama": "TIJANI DAVAN SYAIFUN NAWA", "lp": "L"}]}, "TKR1": {"label": "X TKR 1", "students": [{"no": 1, "nama": "ACHMAD IQBAL MAULANA", "lp": "L"}, {"no": 2, "nama": "AHMAD AGAM PUTRA WARDHANI", "lp": "L"}, {"no": 3, "nama": "AHMAD HAIKAL SULTON MAULUDY", "lp": "L"}, {"no": 4, "nama": "ALIF WICAKSONO JOYOHADI KUSUMO", "lp": "L"}, {"no": 5, "nama": "AQILLAH YOVI AL RIZQI", "lp": "L"}, {"no": 6, "nama": "BAGAS PRAMUDITA PUTRA NAWI", "lp": "L"}, {"no": 7, "nama": "DANAR DWI JULIANTO", "lp": "L"}, {"no": 8, "nama": "DEVIN RAHMAN PERMANA PUTRA", "lp": "L"}, {"no": 9, "nama": "EFAN TRIATMOKO SETIAWAN", "lp": "L"}, {"no": 10, "nama": "FAIRUZ AHZA WIBOWO", "lp": "L"}, {"no": 11, "nama": "GALANG SAPUTRA", "lp": "L"}, {"no": 12, "nama": "HAIKAL ATTA ADRIAN", "lp": "L"}, {"no": 13, "nama": "JUNIOR SAKTI PANCA ASMARA", "lp": "L"}, {"no": 14, "nama": "M AZZAM PUTRA RAMADHAN", "lp": "L"}, {"no": 15, "nama": "MASRUROTUS SHOLICHA NAFIAH", "lp": "P"}, {"no": 16, "nama": "MOCHAMAD RAFA RAMADHAN", "lp": "L"}, {"no": 17, "nama": "MOCHAMMAD DHIYA ULHAQ", "lp": "L"}, {"no": 18, "nama": "MOCHAMMAD RICHI BIMANTARA", "lp": "L"}, {"no": 19, "nama": "MUCHAMMAD HAFID ASHARY", "lp": "L"}, {"no": 20, "nama": "MUHAMMAD ABIY AKMAL WAHIB", "lp": "L"}, {"no": 21, "nama": "MUHAMMAD ALFA ARDIANSYAH", "lp": "L"}, {"no": 22, "nama": "MUHAMMAD AMMAR HABIBI", "lp": "L"}, {"no": 23, "nama": "MUHAMMAD FAHMI BARIKLANA", "lp": "L"}, {"no": 24, "nama": "MUHAMMAD FARREL CHOIRUL FIKRI", "lp": "L"}, {"no": 25, "nama": "MUHAMMAD GION RESTU MAULANA", "lp": "L"}, {"no": 26, "nama": "MUHAMMAD HAIKAL ALLAM CHOIR", "lp": "L"}, {"no": 27, "nama": "MUHAMMAD IRFAN BAHRUDDIN", "lp": "L"}, {"no": 28, "nama": "MUHAMMAD NASIKHUL AMIN", "lp": "L"}, {"no": 29, "nama": "MUHAMMAD RAES RABBANI", "lp": "L"}, {"no": 30, "nama": "MUHAMMAD RAFI JIBRAN NUBAID", "lp": "L"}, {"no": 31, "nama": "MUHAMMAD REVAN AKBAR", "lp": "L"}, {"no": 32, "nama": "MUHAMMAD RIZKY NUR HIDAYATULLAH", "lp": "L"}, {"no": 33, "nama": "MUKHAMMAD HAFIDZ MAULANA", "lp": "L"}, {"no": 34, "nama": "PRADANA TIRTA WIJAYA", "lp": "L"}, {"no": 35, "nama": "RAYHANSAH DONY SAPUTRA", "lp": "L"}, {"no": 36, "nama": "REVY ALDIANSYAH", "lp": "L"}]}, "TKR2": {"label": "X TKR 2", "students": [{"no": 1, "nama": "ADITYA PERMANA PUTRA ANDHIKA", "lp": "L"}, {"no": 2, "nama": "AHMAD ALI FATKHURROZZI", "lp": "L"}, {"no": 3, "nama": "ALIF CAHYA PURNAMA", "lp": "L"}, {"no": 4, "nama": "ALZA GALUH SAPUTRA", "lp": "L"}, {"no": 5, "nama": "AULIA MADINATUROHMAN", "lp": "P"}, {"no": 6, "nama": "BIMA WAHYU ALIFIANTO", "lp": "L"}, {"no": 7, "nama": "DENNIS ADITYA PUTRA", "lp": "L"}, {"no": 8, "nama": "DIGDAYA PANGGAH ARDIYASA", "lp": "L"}, {"no": 9, "nama": "EZAAR RABANI ALAMZAH", "lp": "L"}, {"no": 10, "nama": "FATIH OMAR SHAKIL", "lp": "L"}, {"no": 11, "nama": "HAFIZ RIZKY ABDILLAH", "lp": "L"}, {"no": 12, "nama": "HENDRA FIRMANSYAH", "lp": "L"}, {"no": 13, "nama": "KHOLID", "lp": "L"}, {"no": 14, "nama": "M YOGA SETIAWAN", "lp": "L"}, {"no": 15, "nama": "MOCH DIO FABIAN PUTRA", "lp": "L"}, {"no": 16, "nama": "MOCHAMAD RISKI TRI PANGESTU", "lp": "L"}, {"no": 17, "nama": "MOCHAMMAD RAFFA NURHUDA", "lp": "L"}, {"no": 18, "nama": "MOH FAHRI ALDIANSYAH", "lp": "L"}, {"no": 19, "nama": "MUHAMAD ZAIDAN AFLAH", "lp": "L"}, {"no": 20, "nama": "MUHAMMAD AFFIRZA WIJAKSONO", "lp": "L"}, {"no": 21, "nama": "MUHAMMAD ALFARIZI INFRASETYO", "lp": "L"}, {"no": 22, "nama": "MUHAMMAD DHULFIKAR FAJRULLAH", "lp": "L"}, {"no": 23, "nama": "MUHAMMAD FARDAN FATHUDIN KAHFI", "lp": "L"}, {"no": 24, "nama": "MUHAMMAD GALIH AL FATIH", "lp": "L"}, {"no": 25, "nama": "MUHAMMAD HADID ALFARIZI", "lp": "L"}, {"no": 26, "nama": "MUHAMMAD ILHAM REFANDI", "lp": "L"}, {"no": 27, "nama": "MUHAMMAD MIROJUL ANAM", "lp": "L"}, {"no": 28, "nama": "MUHAMMAD NOUVAL AFRIYANSYAH", "lp": "L"}, {"no": 29, "nama": "MUHAMMAD RAFAEL DWI SAPUTRA", "lp": "L"}, {"no": 30, "nama": "MUHAMMAD RAFKA IBNI ABDILLAH", "lp": "L"}, {"no": 31, "nama": "MUHAMMAD RIZKI ADINATA KRISMAWAN", "lp": "L"}, {"no": 32, "nama": "MUHAMMAD RIZKY SETIAWAN", "lp": "L"}, {"no": 33, "nama": "NIZHAM ALFIN NAHAR ROFIQ", "lp": "L"}, {"no": 34, "nama": "RAISSA IVANDER PRASETYO", "lp": "L"}, {"no": 35, "nama": "RENDRA MAHESADEWA ADMAJA", "lp": "L"}, {"no": 36, "nama": "SANDI SURYA DINATA", "lp": "L"}]}, "TPTU": {"label": "X TPTU", "students": [{"no": 1, "nama": "ADLY FATIH ARRAFI", "lp": "L"}, {"no": 2, "nama": "AHMAD HILMI AL FARIZ", "lp": "L"}, {"no": 3, "nama": "ARINAL HAQ RAHMATULLOH PUTRA MADJID", "lp": "L"}, {"no": 4, "nama": "BAYU AGUNG SAPUTRA", "lp": "L"}, {"no": 5, "nama": "BINTANG PUTRA RAMADHAN", "lp": "L"}, {"no": 6, "nama": "EGA NADHIF ALFARIZA", "lp": "L"}, {"no": 7, "nama": "FACHRI ZAKARIYAH ZUMAR", "lp": "L"}, {"no": 8, "nama": "FAZA ILYA MUZDALIFA", "lp": "L"}, {"no": 9, "nama": "HAFIZD WAHYUDI IBRAHIM", "lp": "L"}, {"no": 10, "nama": "HANISABILA LAILATUR ROHMADIAWAN", "lp": "P"}, {"no": 11, "nama": "IRHAB DIYAUL HAQ", "lp": "L"}, {"no": 12, "nama": "JHON SANDY", "lp": "L"}, {"no": 13, "nama": "JHONATHAN ADITYA RIFQI SHINAR YATHAN", "lp": "L"}, {"no": 14, "nama": "JUVENDY ADZAN ALGHIFAREL", "lp": "L"}, {"no": 15, "nama": "KEN AWANOV ADYTAMA IBRAHIM", "lp": "L"}, {"no": 16, "nama": "KEVIN APRILIO HARDIANSYAH", "lp": "L"}, {"no": 17, "nama": "LIONEL SAGA LESMANA", "lp": "L"}, {"no": 18, "nama": "MAULANA FURQON AL RASYID", "lp": "L"}, {"no": 19, "nama": "MIFTAHUL JAMIL VADRIANSYAH", "lp": "L"}, {"no": 20, "nama": "MOCH SALMAN ALFARISI", "lp": "L"}, {"no": 21, "nama": "MOCHAMAD ZAKKA TIRTA", "lp": "L"}, {"no": 22, "nama": "MOCHAMMAD AKBAR JULIANO", "lp": "L"}, {"no": 23, "nama": "MOH FAHRI ADINATA", "lp": "L"}, {"no": 24, "nama": "MOHAMMAD IBRA PUTRA VALANTINO", "lp": "L"}, {"no": 25, "nama": "MSYAUQY FADHIL RAMADHAN", "lp": "L"}, {"no": 26, "nama": "MUHAMMAD ADAM FALUPI", "lp": "L"}, {"no": 27, "nama": "MUHAMMAD FEBRYANSAH", "lp": "L"}, {"no": 28, "nama": "MUHAMMAD GHEVA DWI SEPTANDARA", "lp": "L"}, {"no": 29, "nama": "MUHAMMAD KEVIN PUTRA JAILANI", "lp": "L"}, {"no": 30, "nama": "MUHAMMAD RIZKY AFANDI", "lp": "L"}, {"no": 31, "nama": "NAWAAL CAHYANA PUTRA", "lp": "L"}, {"no": 32, "nama": "PASHARON TITA ALKAHFI", "lp": "L"}, {"no": 33, "nama": "YAZEER ARAFAD", "lp": "L"}]}, "TPK": {"label": "X TPK", "students": [{"no": 1, "nama": "ACH ACHRIS KHULUQ", "lp": "L"}, {"no": 2, "nama": "ACHMAD FADHIL RAMADHANI", "lp": "L"}, {"no": 3, "nama": "ANANDA RAFIF NUGRAHA", "lp": "L"}, {"no": 4, "nama": "ARFAN ALFAREZEL", "lp": "L"}, {"no": 5, "nama": "ARLAND ZILVIO PRATAMA", "lp": "L"}, {"no": 6, "nama": "ARYA WIBISONO", "lp": "L"}, {"no": 7, "nama": "AYYASH ATHAYA ALTHOF", "lp": "L"}, {"no": 8, "nama": "ELMEREO REGAL PRADANA", "lp": "L"}, {"no": 9, "nama": "EVANZ AFLAH IRSYAD", "lp": "L"}, {"no": 10, "nama": "FAHRI NAUVAL ATALIANSYAH", "lp": "L"}, {"no": 11, "nama": "FAISAL RIDHO SALMAN RIANTO", "lp": "L"}, {"no": 12, "nama": "INDAH DWI PRATIWI", "lp": "P"}, {"no": 13, "nama": "KENZIE PUTRA GEMA", "lp": "L"}, {"no": 14, "nama": "KEVIN WIRAHADI SASTRA", "lp": "L"}, {"no": 15, "nama": "MARVEL NAFIMATIN IRAWAN", "lp": "L"}, {"no": 16, "nama": "MOCH ADILLAH SYARIEF", "lp": "L"}, {"no": 17, "nama": "MOCHAMMAD FARROS DWI MUSYAFFA", "lp": "L"}, {"no": 18, "nama": "MOCHAMMAD HALIIM SYAQIB ZAAHIY", "lp": "L"}, {"no": 19, "nama": "MOHAMAD IRSYAD WAHYU HAFIZH", "lp": "L"}, {"no": 20, "nama": "MOHAMMAD ALFIN KAYSA NAHAR", "lp": "L"}, {"no": 21, "nama": "MOHAMMAD ZIDAN MUBARROQ", "lp": "L"}, {"no": 22, "nama": "MUHAMMAD ABDULLAH MUAZZAM", "lp": "L"}, {"no": 23, "nama": "MUHAMMAD AFFAN PUTRA HANDRYAN", "lp": "L"}, {"no": 24, "nama": "MUHAMMAD ANDREAN SAPUTRA", "lp": "L"}, {"no": 25, "nama": "MUHAMMAD AZMI NAUFAL HARVANI", "lp": "L"}, {"no": 26, "nama": "MUHAMMAD HABIBBUALLAH", "lp": "L"}, {"no": 27, "nama": "MUHAMMAD OCTAVIANO PUTRA", "lp": "L"}, {"no": 28, "nama": "MUHAMMAD RAFA ANDIKA PRATAMA", "lp": "L"}, {"no": 29, "nama": "MUHAMMAD YUARVIAN ARDIANSYAH", "lp": "L"}, {"no": 30, "nama": "NADIYAN ZAKIY OKTAVIANO", "lp": "L"}, {"no": 31, "nama": "NAUFAL ZAKI ADIFIANO", "lp": "L"}, {"no": 32, "nama": "RAYYAN FIRDAUS ACHBARI", "lp": "L"}, {"no": 33, "nama": "RENDY RIVANNO RIZKI RAMADHAN", "lp": "L"}, {"no": 34, "nama": "SYARIF AKBAR ALGADRI", "lp": "L"}, {"no": 35, "nama": "WILLIAM RAFFAEL ANGELO PRASETIYO", "lp": "L"}, {"no": 36, "nama": "ZAHIR DIRJA PURWO", "lp": "L"}]}, "TIPK": {"label": "X TIPK", "students": [{"no": 1, "nama": "ACHMAD MAULANA ALHALIM", "lp": "L"}, {"no": 2, "nama": "ACHMAD ZIDAN NAJIB", "lp": "L"}, {"no": 3, "nama": "AESAR YAQDAN PUTRA CAHYONO", "lp": "L"}, {"no": 4, "nama": "AHMAD IMRU UL QAIS", "lp": "L"}, {"no": 5, "nama": "ALEX DWI JULIYANTO", "lp": "L"}, {"no": 6, "nama": "AMELIA PUTRI KIRANA", "lp": "P"}, {"no": 7, "nama": "ARVIZY RAHMATULLOH", "lp": "L"}, {"no": 8, "nama": "BASETA KALIFKA PRANANDA", "lp": "L"}, {"no": 9, "nama": "BRILLIYAN NUR ANUGRAH", "lp": "L"}, {"no": 10, "nama": "FIRDAUS LANGIT WIJAYANTO", "lp": "L"}, {"no": 11, "nama": "FIRMAN ERLANGGA PUTRA", "lp": "L"}, {"no": 12, "nama": "GUNTUR PRABAZETA ARIFIN", "lp": "L"}, {"no": 13, "nama": "ILHAM NUHSAVAROH", "lp": "L"}, {"no": 14, "nama": "JHIO PRATAMA WICAKSONO", "lp": "L"}, {"no": 15, "nama": "M BALIYAL IKRA", "lp": "L"}, {"no": 16, "nama": "MOCH RIDHO ARYA SAPUTRA", "lp": "L"}, {"no": 17, "nama": "MOCHAMMAD ALVIANO ZIDNA FAQIH DEWA SYAPUTRA", "lp": "L"}, {"no": 18, "nama": "MUHAMAD RIZAL RAMADHAN", "lp": "L"}, {"no": 19, "nama": "MUHAMMAD ASHFA JAZILI", "lp": "L"}, {"no": 20, "nama": "MUHAMMAD DELVINO RAHMADANI BAKRIE", "lp": "L"}, {"no": 21, "nama": "MUHAMMAD GALANG IBRAHIM", "lp": "L"}, {"no": 22, "nama": "MUHAMMAD RAFIZA AL FAHREZI", "lp": "L"}, {"no": 23, "nama": "MUHAMMAD RAHMAN FANANI", "lp": "L"}, {"no": 24, "nama": "MUHAMMAD SALMAN ALFARIZHI", "lp": "L"}, {"no": 25, "nama": "MUHAMMAD WILDAN PUTRA PRATAMA", "lp": "L"}, {"no": 26, "nama": "NIZAR LAKSMANA PANJI PAMUNGKAS", "lp": "L"}, {"no": 27, "nama": "OFIR REZIN MANANSANG", "lp": "L"}, {"no": 28, "nama": "RAFFA NUR FIRMANSYAH", "lp": "L"}, {"no": 29, "nama": "REZA BAYU AJI SAPUTRA", "lp": "L"}, {"no": 30, "nama": "RIZA ALAUDDIN ADIBRATA", "lp": "L"}, {"no": 31, "nama": "SATRIA WIJAYA KUSUMA", "lp": "L"}, {"no": 32, "nama": "SEPTIAN DWI CAHYO INDRAYANTO", "lp": "L"}, {"no": 33, "nama": "SYAHRIAL MAHARDHIKA", "lp": "L"}, {"no": 34, "nama": "YONATAN CHRISTIAN PRAWIRYA", "lp": "L"}, {"no": 35, "nama": "ZDIHNI FITRI A TIYA", "lp": "P"}]}, "TPM": {"label": "X TPM", "students": [{"no": 1, "nama": "ACHMAD ADI PRAMADANI", "lp": "L"}, {"no": 2, "nama": "ADAM AULIA WIDODO", "lp": "L"}, {"no": 3, "nama": "AHMAD BUSTOMI", "lp": "L"}, {"no": 4, "nama": "AHMAD HUSNI MAULANA", "lp": "L"}, {"no": 5, "nama": "ANDIKA DWI PRATAMA", "lp": "L"}, {"no": 6, "nama": "BAGAS FEBRIANSYAH", "lp": "L"}, {"no": 7, "nama": "BAGUS FEBRIANSYAH", "lp": "L"}, {"no": 8, "nama": "FAHMI FIRNANDA ADITYA PUTRA", "lp": "L"}, {"no": 9, "nama": "FRENKI BAHARUDIN AKBAR", "lp": "L"}, {"no": 10, "nama": "JASON YEFTA STEVENLY", "lp": "L"}, {"no": 11, "nama": "KAFKAH ABYAN AL JALAL", "lp": "L"}, {"no": 12, "nama": "MOCH RIZALDI SYAFIRI", "lp": "L"}, {"no": 13, "nama": "MOCHAMMAD ARDHANA JULIANSYAH", "lp": "L"}, {"no": 14, "nama": "MOCHAMMAD IRFAN DASUKI", "lp": "L"}, {"no": 15, "nama": "MOCHAMMAD NAUFAL RAMADIANSYAH", "lp": "L"}, {"no": 16, "nama": "MUCHAMMAD ALFINO RAMADANI", "lp": "L"}, {"no": 17, "nama": "MUHAMMAD AZZAM ABDILLAH", "lp": "L"}, {"no": 18, "nama": "MUHAMMAD DWI NUR RAMADHANI", "lp": "L"}, {"no": 19, "nama": "MUHAMMAD EVAN MAULANA", "lp": "L"}, {"no": 20, "nama": "MUHAMMAD FAHRI SETIAWAN", "lp": "L"}, {"no": 21, "nama": "MUHAMMAD NAUFAL AL HAFIIZH", "lp": "L"}, {"no": 22, "nama": "MUHAMMAD RADITYA ILHAM ARDIANSYAH", "lp": "L"}, {"no": 23, "nama": "MUHAMMAD RADITYA SAPUTRA", "lp": "L"}, {"no": 24, "nama": "MUHAMMAD RIDHO FEBRIAN", "lp": "L"}, {"no": 25, "nama": "MUHAMMAD RIZKY", "lp": "L"}, {"no": 26, "nama": "MUHAMMAD RIZKY ANANTA", "lp": "L"}, {"no": 27, "nama": "MUHAMMAD TSAABIT AZMIY", "lp": "L"}, {"no": 28, "nama": "MUHAMMAD WAHYU AL AMRI", "lp": "L"}, {"no": 29, "nama": "MUHAMMAD ZIDNY HUDAN", "lp": "L"}, {"no": 30, "nama": "NAUFAL RAFADITHYA", "lp": "L"}, {"no": 31, "nama": "RADITYA RAFFA SYAHPUTRA", "lp": "L"}, {"no": 32, "nama": "RAJENDRA SHARMA URDHA YUWONO", "lp": "L"}, {"no": 33, "nama": "REYVANZA OZZY LUHUNG PANGESTU", "lp": "L"}, {"no": 34, "nama": "RICO AJI PRATAMA", "lp": "L"}, {"no": 35, "nama": "XAVIANSYAH ARINDRA PRAKOSO", "lp": "L"}]}, "IK": {"label": "X IK", "students": [{"no": 1, "nama": "ACHMAD RAMADHANI SUHINDRO", "lp": "L"}, {"no": 2, "nama": "ADITYAH PUTRA NASWA", "lp": "L"}, {"no": 3, "nama": "ALIF SATRYA BINTANG PERDANA", "lp": "L"}, {"no": 4, "nama": "ALIVIA ZAAFARANI", "lp": "P"}, {"no": 5, "nama": "ALKHAFI MUHAMMAD FIRMANSYAH", "lp": "L"}, {"no": 6, "nama": "ANANTA PUTRI MULYONO", "lp": "P"}, {"no": 7, "nama": "ANGELINA EKA SYAHPUTRI", "lp": "P"}, {"no": 8, "nama": "AYU ANITA AZARA", "lp": "P"}, {"no": 9, "nama": "AZKIA SALWA KHALISHA AHMADI", "lp": "P"}, {"no": 10, "nama": "BINTANG ARYA ILHAM PRATAMA PUTRA", "lp": "L"}, {"no": 11, "nama": "BINTANG NUR AULIA", "lp": "P"}, {"no": 12, "nama": "CINDY CLAUDYA PUTRI", "lp": "P"}, {"no": 13, "nama": "ERIN AINA AYU KINASIH", "lp": "P"}, {"no": 14, "nama": "FIORENZA DWI INDRIYATNO", "lp": "L"}, {"no": 15, "nama": "GAISAN ARFABANI FANNAN", "lp": "L"}, {"no": 16, "nama": "GILANG ANDRYANO PRATAMA", "lp": "L"}, {"no": 17, "nama": "JESSICA MAZAYA QUEENBY DARONDO", "lp": "P"}, {"no": 18, "nama": "JOYCE ANGELYN KUSWANTO", "lp": "P"}, {"no": 19, "nama": "KAREL CHOIRUN SANDRA", "lp": "P"}, {"no": 20, "nama": "MARSHA ARDILA AZZAHRA", "lp": "P"}, {"no": 21, "nama": "MILAGROS MARDJAN PRINCA DIGJAYA", "lp": "L"}, {"no": 22, "nama": "MOCH IBNU NAZAR ROCHMAN", "lp": "L"}, {"no": 23, "nama": "MOCHAMAD VINO SAPUTRA", "lp": "L"}, {"no": 24, "nama": "MOHAMMAD RESTU PRATAMA", "lp": "L"}, {"no": 25, "nama": "MUHAMAD ABIDAH YAFFI", "lp": "L"}, {"no": 26, "nama": "NAURAH AIDA DEWANTI", "lp": "P"}, {"no": 27, "nama": "NURIN ULMA AULIA", "lp": "P"}, {"no": 28, "nama": "OKTAVIANUS AREROS", "lp": "L"}, {"no": 29, "nama": "PUTRI AURELLIA", "lp": "P"}, {"no": 30, "nama": "ROSELINA FEBRIANTI", "lp": "P"}, {"no": 31, "nama": "SATRIA SURYA HADINATA", "lp": "L"}, {"no": 32, "nama": "SYAHRANI NADIRA PUTRI", "lp": "P"}]}, "TKK": {"label": "X TKK", "students": [{"no": 1, "nama": "AHMAD ALIF RAMADHAN", "lp": "L"}, {"no": 2, "nama": "AHMAD FAJRI PRASETYO", "lp": "L"}, {"no": 3, "nama": "AHMAD FAWAIDUL IRSYAD", "lp": "L"}, {"no": 4, "nama": "ATHA PRATAMA", "lp": "L"}, {"no": 5, "nama": "BUDI SATRIYO WICAKSONO", "lp": "L"}, {"no": 6, "nama": "DEFTA DWI ARJUNA PUTRA HIDAYAT", "lp": "L"}, {"no": 7, "nama": "DZAKY RIZKI RAMADHAN", "lp": "L"}, {"no": 8, "nama": "FASIKHUL FAIQ", "lp": "L"}, {"no": 9, "nama": "FIQRI AKBAR RAHMATULLAH", "lp": "L"}, {"no": 10, "nama": "FRANKY SETYA JULIANO", "lp": "L"}, {"no": 11, "nama": "FREYZA ABIANSYAH ASSAFEE", "lp": "L"}, {"no": 12, "nama": "IBRAHIM EGA BAHTIAR", "lp": "L"}, {"no": 13, "nama": "IQBAL HAFIZH ALIM", "lp": "L"}, {"no": 14, "nama": "JANITRA DWI ADITYA PRATAMA", "lp": "L"}, {"no": 15, "nama": "KEVIN ANDRYAS MAULANA", "lp": "L"}, {"no": 16, "nama": "KRISNA PUTRA BAKTY", "lp": "L"}, {"no": 17, "nama": "LEANDRO ARSENE SYAHPUTRA", "lp": "L"}, {"no": 18, "nama": "MAULANA CHOIRUZ ZAFA", "lp": "L"}, {"no": 19, "nama": "MIKHAEL GRACEIELLO EFFENDI", "lp": "L"}, {"no": 20, "nama": "MOCH EVAN SYAPUTRA", "lp": "L"}, {"no": 21, "nama": "MOCHAMMAD MAULANA IBRAHIM FIRZATULLAH", "lp": "L"}, {"no": 22, "nama": "MUHAMMAD ALDI SAPUTRA", "lp": "L"}, {"no": 23, "nama": "MUHAMMAD ALFATH HANAFI", "lp": "L"}, {"no": 24, "nama": "MUHAMMAD ANNAVIS ALI FIQRI", "lp": "L"}, {"no": 25, "nama": "MUHAMMAD FAREL ZAKARIA", "lp": "L"}, {"no": 26, "nama": "MUHAMMAD FAWWAS HANNAN", "lp": "L"}, {"no": 27, "nama": "MUHAMMAD ILHAM NUR SYAFEI", "lp": "L"}, {"no": 28, "nama": "MUHAMMAD JAKA SATYA WICAKSANA", "lp": "L"}, {"no": 29, "nama": "MUHAMMAD MAULANA IBRAHIM", "lp": "L"}, {"no": 30, "nama": "NABILA TIARA AMALINA", "lp": "P"}, {"no": 31, "nama": "PRAMESTI KIELI AURORA", "lp": "P"}, {"no": 32, "nama": "RADJA BAGUSKOE PRASTYO", "lp": "L"}, {"no": 33, "nama": "RAFI RISMA DANI", "lp": "L"}, {"no": 34, "nama": "SALENDRA SOMA", "lp": "L"}, {"no": 35, "nama": "TRISTANTO AVERIL AAFIYAH", "lp": "L"}, {"no": 36, "nama": "XABIANSYAH ARINDRA PRAKOSO", "lp": "L"}]}}</script>
+<script>
+/* ================= DATA ================= */
+const STUDENTS = JSON.parse(document.getElementById('students-data').textContent);
+const CLASS_ORDER = ['TKJ1','TKJ2','DRBK1','DRBK2','KKB1','KKB2','TKR1','TKR2','TPTU','TPK','TIPK','TPM','IK','TKK'];
+
+/* Kegiatan peserta */
+const ACTIVITIES = [
+  {id:'registrasi', label:'Registrasi', sub:'Sesi 1'},
+  {id:'pembukaan', label:'Upacara Pembukaan', sub:'Sesi 2'},
+  {id:'materi1', label:'Materi Personal Branding dan Literasi Digital', sub:'Sesi 3'},
+  {id:'apiunggun', label:'Api Unggun', sub:'Sesi 4'},
+  {id:'outbound', label:'Outbound', sub:'Sesi 5'},
+  {id:'materi2', label:'Materi Pemadaman Kebakaran', sub:'Sesi 6'},
+  {id:'penutupan', label:'Upacara Penutupan', sub:'Sesi akhir'}
+];
+
+/* Kegiatan panitia: per hari saja */
+const PANITIA_ACTIVITIES = [
+  {id:'hari1', label:'Hari Pertama', sub:'Presensi panitia hari ke-1'},
+  {id:'hari2', label:'Hari Kedua', sub:'Presensi panitia hari ke-2'}
+];
+
+const PANITIA_PASSCODE = '2026';
+
+/* ================= STATE ================= */
+let state = {
+  screen:'home', activity:null, classCode:null, studentNo:null,
+  dashActivity:ACTIVITIES[0].id, dashClass:CLASS_ORDER[0],
+  panitiaAuthed:false, panitiaActivity:null,
+  scanResult:null, scanPhoto:null, lastRecord:null, autoScan:null
+};
+let stream = null;
+
+const app = document.getElementById('app');
+function go(screen, patch){ state = Object.assign(state,{screen}, patch||{}); render(); window.scrollTo(0,0); }
+function actLabel(id){ return (ACTIVITIES.find(a=>a.id===id)||{}).label || id; }
+function panitiaActLabel(id){ return (PANITIA_ACTIVITIES.find(a=>a.id===id)||{}).label || id; }
+function clsLabel(code){ return (STUDENTS[code]||{}).label || code; }
+function pad(n){ return String(n).padStart(2,'0'); }
+function studentId(code,no){ return code+'-'+pad(no); }
+function nowStr(){ const d=new Date(); return d.toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function sanitizeKeyPart(s){ return String(s||'').trim().toLowerCase().replace(/[\s\/\\'"]+/g,'-').slice(0,60) || ('x'+Date.now()); }
+
+/* ================= AUTO CHECK-IN LEWAT LINK BARCODE ================= */
+/* Kalau barcode berisi link ke halaman ini dengan parameter (?nama=...&divisi=...),
+   begitu link dibuka -- dipindai pakai kamera bawaan HP atau kamera apa pun --
+   sistem otomatis mendeteksi datanya dan langsung membawa ke layar konfirmasi,
+   tanpa perlu buka menu / pindai manual lagi di dalam web. */
+function getUrlAutoCheckin(){
+  try{
+    const params = new URLSearchParams(window.location.search);
+    if(!params.has('nama')) return null;
+    const obj = { role: (params.get('role')||'panitia').toLowerCase(), all:{} };
+    for(const [k,v] of params.entries()){ obj.all[k] = v; }
+    obj.nama = params.get('nama')||'';
+    obj.divisi = params.get('divisi')||'';
+    return obj;
+  }catch(e){ return null; }
+}
+function applyAutoCheckin(auto){
+  if(auto.role==='tamu'){
+    const fields = [];
+    for(const k in auto.all){ if(k==='role') continue; fields.push({label:k.charAt(0).toUpperCase()+k.slice(1), value:auto.all[k]}); }
+    state.scanResult = {raw:window.location.search||('auto-'+Date.now()), fields};
+    state.scanPhoto = null;
+    state.screen = 'tamu-confirm';
+  }else{
+    state.autoScan = {nama:auto.nama, divisi:auto.divisi};
+    state.screen = 'panitia-auto-day';
+  }
+}
+function confirmAutoPanitia(hari){
+  state.panitiaActivity = hari;
+  state.scanResult = {raw:'auto-'+state.autoScan.nama, nama:state.autoScan.nama, divisi:state.autoScan.divisi};
+  state.scanPhoto = null;
+  go('panitia-confirm');
+}
+
+
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2600);
+}
+
+/* ================= STORAGE HELPERS ================= */
+/* Prioritas 1: Firebase Firestore -> BENAR-BENAR tersinkron ke SEMUA perangkat
+   (HP, laptop, siapa pun yang buka link ini), karena disimpan di database online.
+   Prioritas 2: window.storage milik Claude (hanya aktif kalau dibuka di dalam app Claude).
+   Prioritas 3: penyimpanan lokal perangkat ini saja (jaring pengaman terakhir,
+   supaya input tidak pernah gagal total meski semua opsi di atas tidak tersedia). */
+const firebaseConfig = {
+  apiKey: "AIzaSyDY0gg4BnUEzv0QT6B-wlhNNsu1OhpVG7Q",
+  authDomain: "presensi-ota-2026.firebaseapp.com",
+  projectId: "presensi-ota-2026",
+  storageBucket: "presensi-ota-2026.firebasestorage.app",
+  messagingSenderId: "537750925191",
+  appId: "1:537750925191:web:c4048b4ba0d4860ea2ad22"
+};
+const FS_COLLECTION = 'presensi_ota_2026';
+let fbDb = null;
+let storageMode = 'checking'; // 'firebase' | 'cloud' | 'local'
+async function detectStorageMode(){
+  try{
+    if(typeof firebase!=='undefined' && firebaseConfig && firebaseConfig.apiKey){
+      if(!firebase.apps || !firebase.apps.length){ firebase.initializeApp(firebaseConfig); }
+      fbDb = firebase.firestore();
+      await fbDb.collection(FS_COLLECTION).limit(1).get();
+      storageMode = 'firebase';
+      return;
+    }
+  }catch(e){ /* lanjut coba opsi berikutnya */ }
+  try{
+    if(window.storage && typeof window.storage.list==='function'){
+      await window.storage.list('__ping__', true);
+      storageMode = 'cloud';
+      return;
+    }
+  }catch(e){}
+  storageMode = 'local';
+}
+function lsKey(key){ return 'presensi_ota_'+key; }
+async function storeGet(key){
+  if(storageMode==='firebase'){
+    try{ const doc = await fbDb.collection(FS_COLLECTION).doc(key).get(); return doc.exists ? JSON.parse(doc.data().v) : null; }
+    catch(e){ return null; }
+  }
+  if(storageMode==='cloud'){
+    try{ const r = await window.storage.get(key, true); return r ? JSON.parse(r.value) : null; }
+    catch(e){ return null; }
+  }
+  try{ const v = localStorage.getItem(lsKey(key)); return v ? JSON.parse(v) : null; }
+  catch(e){ return null; }
+}
+async function storeSet(key,val){
+  if(storageMode==='firebase'){
+    try{ await fbDb.collection(FS_COLLECTION).doc(key).set({v: JSON.stringify(val)}); return true; }
+    catch(e){ /* jatuh ke opsi di bawah */ }
+  }
+  if(storageMode==='cloud'){
+    try{ await window.storage.set(key, JSON.stringify(val), true); return true; }
+    catch(e){ /* jatuh ke penyimpanan lokal di bawah */ }
+  }
+  try{ localStorage.setItem(lsKey(key), JSON.stringify(val)); return true; }
+  catch(e){ toast('Gagal menyimpan, coba lagi.'); return false; }
+}
+async function storeDelete(key){
+  if(storageMode==='firebase'){
+    try{ await fbDb.collection(FS_COLLECTION).doc(key).delete(); return true; }catch(e){}
+  }
+  if(storageMode==='cloud'){
+    try{ await window.storage.delete(key, true); return true; }catch(e){}
+  }
+  try{ localStorage.removeItem(lsKey(key)); return true; }catch(e){ return false; }
+}
+async function storeList(prefix){
+  if(storageMode==='firebase'){
+    try{
+      const end = prefix + '\uf8ff';
+      const snap = await fbDb.collection(FS_COLLECTION)
+        .where(firebase.firestore.FieldPath.documentId(), '>=', prefix)
+        .where(firebase.firestore.FieldPath.documentId(), '<', end)
+        .get();
+      return snap.docs.map(d=>d.id);
+    }catch(e){ return []; }
+  }
+  if(storageMode==='cloud'){
+    try{ const r = await window.storage.list(prefix, true); return (r && r.keys) ? r.keys : []; }
+    catch(e){ return []; }
+  }
+  try{
+    const keys=[]; const p = lsKey(prefix);
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.indexOf(p)===0) keys.push(k.slice('presensi_ota_'.length)); }
+    return keys;
+  }catch(e){ return []; }
+}
+function attKey(activity,code,no){ return 'att:'+activity+':'+code+':'+no; }
+function pattKey(activity,idPart){ return 'patt:'+activity+':'+sanitizeKeyPart(idPart); }
+function tamuKey(idPart){ return 'tamu:'+sanitizeKeyPart(idPart); }
+
+/* ================= CAMERA (foto biasa, mis. tambah foto peserta) ================= */
+async function openCamera(onCapture, opts){
+  opts = opts || {};
+  const overlay = document.createElement('div');
+  overlay.className='cam-overlay';
+  overlay.innerHTML = `
+    <div class="cam-frame" id="camFrame"><video id="camVideo" autoplay playsinline muted></video></div>
+    <div class="cam-controls">
+      <div class="cam-btn-round" id="camClose">✕</div>
+      <div class="cam-shutter" id="camShutter"></div>
+      <div class="cam-btn-round" id="camFlip">⟳</div>
+    </div>
+    <div class="cam-hint">Posisikan objek di dalam bingkai, lalu tekan tombol putih</div>
+  `;
+  document.body.appendChild(overlay);
+  let facing = opts.facing || 'user';
+  async function startStream(){
+    try{
+      if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:facing}, audio:false});
+      const v = document.getElementById('camVideo');
+      v.srcObject = stream;
+      v.style.transform = facing==='user' ? 'scaleX(-1)' : 'none';
+    }catch(e){
+      toast('Kamera tidak dapat diakses. Periksa izin kamera pada browser.');
+      closeCam();
+      if(opts.onSkip) opts.onSkip();
+    }
+  }
+  function closeCam(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } overlay.remove(); }
+  document.getElementById('camClose').onclick = ()=>{ closeCam(); if(opts.onCancel) opts.onCancel(); };
+  document.getElementById('camFlip').onclick = ()=>{ facing = facing==='user'?'environment':'user'; startStream(); };
+  document.getElementById('camShutter').onclick = ()=>{
+    const v = document.getElementById('camVideo');
+    const canvas = document.createElement('canvas');
+    const size = 480; canvas.width=size; canvas.height=size*4/3;
+    const ctx = canvas.getContext('2d');
+    if(facing==='user'){ ctx.translate(size,0); ctx.scale(-1,1); }
+    const vw=v.videoWidth||size, vh=v.videoHeight||size*4/3;
+    const scale = Math.max(canvas.width/vw, canvas.height/vh);
+    const sw=canvas.width/scale, sh=canvas.height/scale, sx=(vw-sw)/2, sy=(vh-sh)/2;
+    ctx.drawImage(v, sx,sy,sw,sh, 0,0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.55);
+    closeCam(); onCapture(dataUrl);
+  };
+  startStream();
+}
+
+/* ================= SCANNER (barcode 1D + QR) untuk Panitia & Tamu ================= */
+/* Pemindai utama: ZXing (mendukung QR code DAN barcode garis 1D seperti Code128/EAN/UPC/Code39).
+   Kalau ZXing gagal dimuat, otomatis jatuh ke jsQR (khusus QR code) sebagai cadangan. */
+let scanState = { rafId:null, scanning:false };
+let zxingReader = null;
+function snapFrame(video){
+  const c = document.createElement('canvas');
+  const size = 480; c.width=size; c.height=size*4/3;
+  const ctx = c.getContext('2d');
+  const vw=video.videoWidth||size, vh=video.videoHeight||size*4/3;
+  const scale = Math.max(c.width/vw, c.height/vh);
+  const sw=c.width/scale, sh=c.height/scale, sx=(vw-sw)/2, sy=(vh-sh)/2;
+  ctx.drawImage(video, sx,sy,sw,sh, 0,0, c.width, c.height);
+  return c.toDataURL('image/jpeg',0.55);
+}
+function isZXingReady(){ return typeof ZXing!=='undefined' && ZXing.BrowserMultiFormatReader; }
+function isJsQRReady(){ return typeof jsQR==='function'; }
+function waitForScannerLib(timeoutMs){
+  return new Promise(resolve=>{
+    if(isZXingReady()||isJsQRReady()){ resolve(true); return; }
+    const start = Date.now();
+    const iv = setInterval(()=>{
+      if(isZXingReady()||isJsQRReady()){ clearInterval(iv); resolve(true); }
+      else if(Date.now()-start > timeoutMs){ clearInterval(iv); resolve(false); }
+    }, 150);
+  });
+}
+async function startScanner(videoElId, statusElId, onDetected){
+  scanState = { rafId:null, scanning:true };
+  const video = document.getElementById(videoElId);
+  if(!video) return;
+  const st = document.getElementById(statusElId);
+  if(st) st.textContent = 'Membuka kamera...';
+  try{
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false});
+    }catch(e1){
+      // Perangkat tanpa kamera belakang (mis. laptop) -> pakai kamera apa saja yang tersedia
+      stream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
+    }
+    video.srcObject = stream;
+    await video.play().catch(()=>{});
+  }catch(e){
+    let msg = 'Kamera tidak dapat diakses. Periksa izin kamera pada browser, lalu tekan tombol untuk mencoba lagi.';
+    if(e && e.name==='NotAllowedError') msg = 'Izin kamera ditolak. Aktifkan izin kamera untuk situs ini di pengaturan browser, lalu tekan tombol untuk mencoba lagi.';
+    else if(e && e.name==='NotFoundError') msg = 'Kamera tidak ditemukan pada perangkat ini.';
+    if(st) st.textContent = msg;
+    return;
+  }
+  if(st) st.textContent = 'Menyiapkan pemindai...';
+  const ready = await waitForScannerLib(6000);
+  if(!scanState.scanning) return; // pengguna sudah keluar dari layar
+  if(!ready){
+    if(st) st.textContent = 'Pemindai gagal dimuat (periksa koneksi internet), coba tekan tombol untuk mengulang.';
+    return;
+  }
+  let handled = false;
+  const finish = (text)=>{
+    if(handled) return; handled = true;
+    onDetected(text, video);
+  };
+
+  if(isZXingReady()){
+    /* Mode utama: ZXing -> baca QR code maupun barcode garis 1D (Code128, EAN-13/8, UPC-A/E, Code39, Codabar, ITF, dll) */
+    if(st) st.textContent = 'Arahkan kamera ke QR code atau barcode garis. Data akan muncul otomatis.';
+    try{
+      zxingReader = new ZXing.BrowserMultiFormatReader();
+      let frameCount = 0;
+      zxingReader.decodeFromVideoElement(video, (result, err)=>{
+        if(!scanState.scanning || handled) return;
+        if(result){ finish(result.getText()); return; }
+        frameCount++;
+        if(frameCount===140 && st){ st.textContent = 'Belum terdeteksi. Dekatkan/jauhkan kode dan pastikan cahaya cukup terang.'; }
+      });
+    }catch(e){
+      if(st) st.textContent = 'Pemindai gagal dijalankan, coba tekan tombol untuk mengulang.';
+    }
+  }else if(isJsQRReady()){
+    /* Cadangan: jsQR -> hanya bisa baca QR code */
+    if(st) st.textContent = 'Arahkan kamera ke QR code. Data akan muncul otomatis.';
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', {willReadFrequently:true});
+    let frameCount = 0;
+    function loop(){
+      if(!scanState.scanning) return;
+      if(video.readyState===video.HAVE_ENOUGH_DATA && video.videoWidth>0){
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+        try{
+          const img = ctx.getImageData(0,0,canvas.width,canvas.height);
+          const code = jsQR(img.data, img.width, img.height, {inversionAttempts:'attemptBoth'});
+          if(code && code.data){ finish(code.data); return; }
+          frameCount++;
+          if(frameCount===180 && st){ st.textContent = 'Belum terdeteksi. Dekatkan/jauhkan kode QR dan pastikan cahaya cukup terang.'; }
+        }catch(e){}
+      }
+      scanState.rafId = requestAnimationFrame(loop);
+    }
+    loop();
+  }
+}
+function stopScanner(){
+  scanState.scanning = false;
+  if(scanState.rafId) cancelAnimationFrame(scanState.rafId);
+  if(zxingReader){ try{ zxingReader.reset(); }catch(e){} zxingReader = null; }
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+}
+function parseScannedCode(text){
+  text = (text||'').trim();
+  // Barcode berupa link URL (mis. dari QR generator yang encode link + parameter)
+  // -> ambil nilai dari parameter URL-nya, bukan link mentahnya
+  try{
+    if(/^https?:\/\//i.test(text)){
+      const url = new URL(text);
+      const p = url.searchParams;
+      if([...p.keys()].length){
+        return {
+          nama: p.get('nama')||p.get('name')||p.get('Nama')||'',
+          telp: p.get('telp')||p.get('hp')||p.get('phone')||p.get('no_hp')||'',
+          asal: p.get('asal')||p.get('instansi')||'',
+          divisi: p.get('divisi')||p.get('role')||p.get('divisi_panitia')||''
+        };
+      }
+    }
+  }catch(e){}
+  try{
+    const obj = JSON.parse(text);
+    if(obj && typeof obj==='object'){
+      return {
+        nama: obj.nama||obj.name||obj.Nama||'',
+        telp: obj.telp||obj.hp||obj.phone||obj.no_hp||'',
+        asal: obj.asal||obj.instansi||obj.Asal||'',
+        divisi: obj.divisi||obj.divisi_panitia||''
+      };
+    }
+  }catch(e){}
+  for(const d of ['|',';']){
+    if(text.indexOf(d)>-1){
+      const parts = text.split(d).map(s=>s.trim());
+      return { nama: parts[0]||'', telp: parts[1]||'', asal: parts[2]||'', divisi: parts[1]||'' };
+    }
+  }
+  return { nama:text, telp:'', asal:'', divisi:'' };
+}
+
+/* Parser umum untuk Tamu: menampilkan SEMUA data apa pun isi/format barcode-nya,
+   tanpa mengasumsikan field tertentu. Mendukung JSON, pasangan key=value,
+   daftar dipisah | atau ; , sampai teks polos. */
+function parseAllFields(text){
+  text = (text||'').trim();
+  if(!text) return [{label:'Data', value:'(kosong)'}];
+  // 0) Barcode berupa link URL dengan parameter (?jenis=...&pangkalan=...&angkatan=...)
+  //    -> ambil SEMUA parameternya apa adanya, sama seperti cara Panitia dibaca
+  try{
+    if(/^https?:\/\//i.test(text)){
+      const url = new URL(text);
+      const keys = [...url.searchParams.keys()].filter(k=>k.toLowerCase()!=='role');
+      if(keys.length){
+        return keys.map(k=>({label:k.charAt(0).toUpperCase()+k.slice(1), value:url.searchParams.get(k)}));
+      }
+    }
+  }catch(e){}
+  // 1) JSON object -> pakai semua key-value apa adanya
+  try{
+    const obj = JSON.parse(text);
+    if(obj && typeof obj==='object' && !Array.isArray(obj)){
+      const keys = Object.keys(obj);
+      if(keys.length){ return keys.map(k=>({label:k, value:String(obj[k])})); }
+    }
+  }catch(e){}
+  const delim = /[|;\n]/;
+  const hasDelim = delim.test(text);
+  // 2) pasangan key=value dipisah | ; atau baris baru
+  if(hasDelim && text.indexOf('=')>-1){
+    const parts = text.split(delim).map(s=>s.trim()).filter(Boolean);
+    if(parts.length && parts.every(p=>p.indexOf('=')>-1)){
+      return parts.map(p=>{ const i=p.indexOf('='); return {label:p.slice(0,i).trim()||'Data', value:p.slice(i+1).trim()}; });
+    }
+  }
+  // 3) daftar nilai polos dipisah | atau ;
+  if(hasDelim){
+    const parts = text.split(delim).map(s=>s.trim()).filter(Boolean);
+    if(parts.length>1){ return parts.map((v,i)=>({label:'Data '+(i+1), value:v})); }
+  }
+  // 4) satu baris teks polos
+  return [{label:'Data', value:text}];
+}
+
+/* ================= LAYOUT ================= */
+function topbar({eyebrow, title, back}){
+  return `
+  <div class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <div class="brand-badge">⚓</div>
+        <div><p class="brand-title">Orientasi Tamu Ambalan</p><p class="brand-sub">2026</p></div>
+      </div>
+      ${back? `<div class="back-btn" onclick="${back}">‹</div>`:''}
+    </div>
+    ${eyebrow? `<p class="eyebrow">${eyebrow}</p>`:''}
+    ${title? `<h1 class="screen-title">${title}</h1>`:''}
+  </div>`;
+}
+
+function render(){
+  let html = '';
+  if(state.screen==='home') html = renderHome();
+  else if(state.screen==='peserta-activity') html = renderPesertaActivity();
+  else if(state.screen==='peserta-class') html = renderPesertaClass();
+  else if(state.screen==='peserta-input') html = renderPesertaInput();
+  else if(state.screen==='tamu-scan') html = renderTamuScan();
+  else if(state.screen==='tamu-confirm') html = renderTamuConfirm();
+  else if(state.screen==='tamu-success') html = renderTamuSuccess();
+  else if(state.screen==='panitia-gate') html = renderPanitiaGate();
+  else if(state.screen==='panitia-home') html = renderPanitiaHome();
+  else if(state.screen==='panitia-kelola') html = renderKelolaPanitia();
+  else if(state.screen==='panitia-checkin-activity') html = renderPanitiaCheckinActivity();
+  else if(state.screen==='panitia-auto-day') html = renderPanitiaAutoDay();
+  else if(state.screen==='panitia-scan') html = renderPanitiaScan();
+  else if(state.screen==='panitia-confirm') html = renderPanitiaConfirm();
+  else if(state.screen==='panitia-checkin-success') html = renderPanitiaCheckinSuccess();
+  else if(state.screen==='panitia-dashboard') html = renderDashboard();
+  else if(state.screen==='panitia-tamu-recap') html = renderTamuRecapScreen();
+  else if(state.screen==='panitia-panitia-recap') html = renderPanitiaRecapScreen();
+  app.innerHTML = html;
+}
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  const modeNote = (storageMode==='firebase' || storageMode==='cloud')
+    ? 'Data presensi tersinkron otomatis ke semua perangkat yang membuka tautan ini.'
+    : storageMode==='local'
+      ? 'Mode penyimpanan: perangkat ini saja (database online tidak dapat dihubungi). Periksa koneksi internet lalu muat ulang halaman.'
+      : 'Memeriksa mode penyimpanan...';
+  return `
+  ${topbar({})}
+  <div class="content">
+    <p class="section-label" style="margin-top:2px;">Pilih peran anda</p>
+    <div class="role-grid">
+      <button class="role-card" onclick="go('peserta-activity')">
+        <div class="role-icon">🧭</div>
+        <div class="role-text"><h3>Peserta</h3><p>Input kehadiran peserta per kelas via ID absen</p></div>
+        <div class="role-arrow">›</div>
+      </button>
+      <button class="role-card" onclick="go('panitia-gate')">
+        <div class="role-icon">🛠️</div>
+        <div class="role-text"><h3>Panitia</h3><p>Presensi panitia via pindai barcode &amp; dasbor rekap</p></div>
+        <div class="role-arrow">›</div>
+      </button>
+      <button class="role-card" onclick="go('tamu-scan')">
+        <div class="role-icon">🎟️</div>
+        <div class="role-text"><h3>Tamu</h3><p>Presensi tamu cukup pindai barcode undangan</p></div>
+        <div class="role-arrow">›</div>
+      </button>
+    </div>
+    <div class="divider"></div>
+    <div class="card" style="text-align:center;">
+      <p style="margin:0; font-size:12px; color:#5C7B94;">${modeNote}</p>
+    </div>
+    <p class="footer-note">Sistem Presensi Digital · Biru &amp; Putih</p>
+  </div>`;
+}
+
+/* ================= PESERTA ================= */
+function renderPesertaActivity(){
+  return `
+  ${topbar({eyebrow:'Input Presensi Peserta · Langkah 1 dari 2', title:'Pilih Kegiatan', back:"go('home')"})}
+  <div class="content">
+    <div class="activity-list">
+      ${ACTIVITIES.map(a=>`
+        <div class="activity-row" onclick="go('peserta-class',{activity:'${a.id}'})">
+          <div class="activity-num">${ACTIVITIES.indexOf(a)+1}</div>
+          <div><div class="activity-name">${a.label}</div><div class="activity-sub">${a.sub}</div></div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+function renderPesertaClass(){
+  return `
+  ${topbar({eyebrow:'Input Presensi Peserta · Langkah 2 dari 2 · '+actLabel(state.activity), title:'Pilih Kelas', back:"go('peserta-activity')"})}
+  <div class="content">
+    <div class="chip-grid">
+      ${CLASS_ORDER.map(c=>`
+        <button class="chip" onclick="go('peserta-input',{classCode:'${c}'})">
+          <span class="chip-code">${c}</span><span class="chip-name">${clsLabel(c)}</span>
+          <span class="chip-count">${STUDENTS[c].students.length} siswa</span>
+        </button>`).join('')}
+    </div>
+  </div>`;
+}
+function renderPesertaInput(){
+  setTimeout(loadPesertaInputList, 0);
+  return `
+  ${topbar({eyebrow:actLabel(state.activity)+' · '+clsLabel(state.classCode), title:'Input Kehadiran', back:"go('peserta-class')"})}
+  <div class="content">
+    <div class="search-box">
+      <span class="mono" style="font-weight:700;color:var(--ocean);">ID</span>
+      <input type="tel" inputmode="numeric" id="quickId" placeholder="Ketik nomor absen, lalu Enter">
+      <button class="sbtn" onclick="quickMark()">Tandai</button>
+    </div>
+    <div id="pesertaSummary" style="margin-bottom:10px;"></div>
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="searchStudent" placeholder="Atau cari nama siswa..." oninput="filterStudents(this.value)">
+    </div>
+    <div class="student-list" id="studentList"><div class="loader"><div class="spin"></div>Memuat data siswa...</div></div>
+  </div>`;
+}
+let pesertaRecordsCache = {};
+async function loadPesertaInputList(){
+  const box = document.getElementById('studentList');
+  const sumBox = document.getElementById('pesertaSummary');
+  if(!box) return;
+  const list = STUDENTS[state.classCode].students;
+  const keys = await storeList(attKey(state.activity, state.classCode, ''));
+  const records = await Promise.all(keys.map(k=>storeGet(k)));
+  const map = {};
+  records.filter(Boolean).forEach(r=>{ map[r.no]=r; });
+  pesertaRecordsCache = map;
+  updatePesertaSummary();
+  renderPesertaRows();
+  const qi = document.getElementById('quickId');
+  if(qi){ qi.focus(); qi.onkeydown = (e)=>{ if(e.key==='Enter') quickMark(); }; }
+}
+function updatePesertaSummary(){
+  const sumBox = document.getElementById('pesertaSummary');
+  if(!sumBox) return;
+  const list = STUDENTS[state.classCode].students;
+  const hadirCount = Object.keys(pesertaRecordsCache).length;
+  sumBox.innerHTML = `<div class="summary-bar" style="margin-bottom:0;">
+    <div class="summary-pill"><div class="num">${hadirCount}</div><div class="lbl">Hadir</div></div>
+    <div class="summary-pill"><div class="num">${list.length-hadirCount}</div><div class="lbl">Belum</div></div>
+  </div>`;
+}
+function renderPesertaRows(){
+  const box = document.getElementById('studentList');
+  if(!box) return;
+  const list = STUDENTS[state.classCode].students;
+  box.innerHTML = list.map(s=>{
+    const r = pesertaRecordsCache[s.no];
+    const done = !!r;
+    return `
+    <div class="student-row ${done?'done':''}" data-name="${esc(s.nama.toLowerCase())}" data-no="${s.no}">
+      <span class="student-id">${studentId(state.classCode,s.no)}</span>
+      <span class="student-name">${esc(s.nama)}</span>
+      ${done
+        ? `<span class="student-status">✓ ${(r.waktu||'').split(', ').pop()}</span>
+           <span class="icon-btn" onclick="addPhotoTo(${s.no})">📷</span>
+           <span class="icon-btn" style="color:#C0392B;" onclick="unmarkStudent(${s.no})">↺</span>`
+        : `<button class="mark-btn" onclick="markStudent(${s.no})">Tandai</button>`}
+    </div>`;
+  }).join('');
+}
+function filterStudents(q){
+  q = q.toLowerCase().trim();
+  document.querySelectorAll('#studentList .student-row').forEach(row=>{
+    const match = row.dataset.name.includes(q) || row.dataset.no===q.replace(/^0+/,'');
+    row.style.display = (q==='' || match) ? 'flex' : 'none';
+  });
+}
+async function markStudent(no){
+  if(pesertaRecordsCache[no]){ toast('Siswa ini sudah tercatat hadir.'); return; }
+  const student = STUDENTS[state.classCode].students.find(s=>s.no===no);
+  const key = attKey(state.activity, state.classCode, no);
+  const record = { nama: student.nama, kelas: state.classCode, no, waktu: nowStr(), foto: null, ts: Date.now() };
+  const ok = await storeSet(key, record);
+  if(ok){
+    pesertaRecordsCache[no] = record;
+    toast(student.nama+' — hadir ✓');
+    renderPesertaRows();
+    updatePesertaSummary();
+  }
+}
+async function quickMark(){
+  const input = document.getElementById('quickId');
+  if(!input) return;
+  let raw = input.value.trim().toUpperCase().replace(state.classCode+'-','').replace(/^0+/,'');
+  const no = parseInt(raw,10);
+  input.value='';
+  if(!no || isNaN(no)){ toast('Masukkan nomor absen yang valid.'); return; }
+  const student = STUDENTS[state.classCode].students.find(s=>s.no===no);
+  if(!student){ toast('Nomor absen '+no+' tidak ditemukan di kelas ini.'); return; }
+  await markStudent(no);
+  input.focus();
+}
+async function unmarkStudent(no){
+  const key = attKey(state.activity, state.classCode, no);
+  await storeDelete(key);
+  delete pesertaRecordsCache[no];
+  toast('Status kehadiran dibatalkan.');
+  renderPesertaRows();
+  updatePesertaSummary();
+}
+function addPhotoTo(no){
+  const student = STUDENTS[state.classCode].students.find(s=>s.no===no);
+  openCamera(async (photo)=>{
+    const key = attKey(state.activity, state.classCode, no);
+    const record = pesertaRecordsCache[no] || {};
+    record.foto = photo;
+    await storeSet(key, record);
+    pesertaRecordsCache[no] = record;
+    toast('Foto ditambahkan untuk '+student.nama+'.');
+    renderPesertaRows();
+  }, {facing:'environment'});
+}
+
+/* ================= TAMU (khusus pindai barcode, tanpa input manual) ================= */
+function renderTamuScan(){
+  return `
+  ${topbar({eyebrow:'Tamu Undangan', title:'Pindai Barcode Tamu', back:"stopScanner(); go('home')"})}
+  <div class="content">
+    <div class="scan-frame" id="tamuScanFrame">
+      <video id="tamuVideo" autoplay playsinline muted></video>
+      <div class="scan-target"></div>
+      <div id="tamuScanPlaceholder" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:var(--navy); color:#fff; text-align:center; padding:24px; font-size:13px;">Tekan tombol di bawah untuk membuka kamera</div>
+    </div>
+    <p id="tamuScanStatus" style="text-align:center; font-size:12.5px; color:#5C7B94; margin-bottom:16px;">Arahkan kamera ke barcode/QR pada undangan tamu. Data akan muncul otomatis.</p>
+    <button class="btn btn-primary" id="tamuOpenCamBtn" onclick="startTamuScanBtn()">📷 Buka Kamera &amp; Mulai Pindai</button>
+  </div>`;
+}
+function startTamuScanBtn(){
+  const ph = document.getElementById('tamuScanPlaceholder'); if(ph) ph.style.display='none';
+  const btn = document.getElementById('tamuOpenCamBtn'); if(btn) btn.textContent='↻ Mulai Ulang Kamera';
+  startScanner('tamuVideo','tamuScanStatus', onTamuDetected);
+}
+function onTamuDetected(text, video){
+  stopScanner();
+  const photo = snapFrame(video);
+  go('tamu-confirm', {scanResult:{raw:text, fields:parseAllFields(text)}, scanPhoto:photo});
+}
+function renderTamuConfirm(){
+  const r = state.scanResult||{};
+  const fields = r.fields||[];
+  return `
+  ${topbar({eyebrow:'Tamu Undangan', title:'Konfirmasi Data', back:"go('tamu-scan')"})}
+  <div class="content">
+    ${state.scanPhoto ? `<div style="text-align:center; margin-bottom:16px;"><img src="${state.scanPhoto}" style="width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid var(--white);box-shadow:var(--shadow);"></div>` : ''}
+    <div class="card">
+      ${fields.map((f,i)=>`<div class="field" style="${i===fields.length-1?'margin-bottom:0;':''}"><label>${esc(f.label)}</label><input type="text" value="${esc(f.value)}" readonly></div>`).join('')}
+    </div>
+    <p style="text-align:center; font-size:11.5px; color:#93A9BC; margin:8px 0 16px;">Data ini terbaca otomatis dari barcode. Pastikan sudah sesuai sebelum menyimpan.</p>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="stopScanner(); go('tamu-scan')">Pindai Ulang</button>
+      <button class="btn btn-primary" onclick="submitTamu()">Simpan Presensi</button>
+    </div>
+  </div>`;
+}
+async function submitTamu(){
+  const r = state.scanResult||{};
+  const id = r.raw || ('manual-'+Date.now());
+  const key = tamuKey(id);
+  const existing = await storeGet(key);
+  if(existing){ toast('Tamu ini sudah tercatat hadir sebelumnya.'); go('tamu-success', {lastRecord:existing}); return; }
+  const record = { fields: r.fields||[], waktu: nowStr(), foto: state.scanPhoto||null, ts: Date.now() };
+  await storeSet(key, record);
+  go('tamu-success', {lastRecord:record});
+}
+function renderTamuSuccess(){
+  const r = state.lastRecord||{};
+  const fields = r.fields||[];
+  const headline = fields[0] ? fields[0].value : 'Tamu';
+  const rest = fields.slice(1);
+  return `
+  ${topbar({eyebrow:'Presensi berhasil', title:'Tiket Tamu'})}
+  <div class="content">
+    <div class="ticket">
+      <div class="ticket-top">
+        ${r.foto ? `<img class="ticket-photo" src="${r.foto}">` : `<div class="ticket-photo" style="display:flex;align-items:center;justify-content:center;font-size:22px;">🎪</div>`}
+        <div><p class="ticket-name">${esc(headline)}</p><p class="ticket-class">Tamu Undangan</p></div>
+        <div class="stamp">HADIR</div>
+      </div>
+      <div class="perforation"></div>
+      <div class="ticket-bottom">
+        ${rest.map(f=>`<div class="ticket-field"><div class="k">${esc(f.label)}</div><div class="v" style="font-size:12.5px;">${esc(f.value)}</div></div>`).join('')}
+        <div class="ticket-field"><div class="k">Waktu</div><div class="v" style="font-size:12.5px;">${r.waktu||''}</div></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="go('tamu-scan')">Pindai Tamu Berikutnya</button>
+    <div style="margin-top:10px;"><button class="btn btn-ghost" onclick="go('home')">Selesai</button></div>
+  </div>`;
+}
+
+/* ================= PANITIA ================= */
+function renderPanitiaGate(){
+  return `
+  ${topbar({eyebrow:'Akses Panitia', title:'Masukkan Kode', back:"go('home')"})}
+  <div class="content">
+    <p style="text-align:center; font-size:13px; color:#5C7B94;">Masukkan kode akses panitia (4 digit) yang diberikan koordinator OTA.</p>
+    <div class="pass-input">${[0,1,2,3].map(i=>`<input type="tel" maxlength="1" id="pd${i}" oninput="passMove(${i})">`).join('')}</div>
+    <div id="passError" style="text-align:center; color:#C0392B; font-size:12.5px; min-height:18px;"></div>
+    <button class="btn btn-primary" onclick="checkPass()">Masuk</button>
+  </div>`;
+}
+function passMove(i){ const el=document.getElementById('pd'+i); if(el.value && i<3){ document.getElementById('pd'+(i+1)).focus(); } if(i===3 && el.value) checkPass(); }
+function checkPass(){
+  let code=''; for(let i=0;i<4;i++) code+=(document.getElementById('pd'+i).value||'');
+  if(code===PANITIA_PASSCODE){ state.panitiaAuthed=true; go('panitia-home'); }
+  else{ const err=document.getElementById('passError'); if(err) err.textContent='Kode salah, coba lagi.'; }
+}
+function renderPanitiaHome(){
+  if(!state.panitiaAuthed) return renderPanitiaGate();
+  return `
+  ${topbar({eyebrow:'Panel Panitia', title:'Menu Panitia', back:"go('home')"})}
+  <div class="content">
+    <div class="role-grid">
+      <button class="role-card" onclick="go('panitia-checkin-activity')">
+        <div class="role-icon">🪪</div>
+        <div class="role-text"><h3>Presensi Panitia</h3><p>Pindai barcode untuk catat kehadiran diri sendiri</p></div>
+        <div class="role-arrow">›</div>
+      </button>
+      <button class="role-card" onclick="go('panitia-dashboard')">
+        <div class="role-icon">📊</div>
+        <div class="role-text"><h3>Dasbor Rekap</h3><p>Rekap kehadiran peserta per kelas &amp; kegiatan</p></div>
+        <div class="role-arrow">›</div>
+      </button>
+      <button class="role-card" onclick="go('panitia-panitia-recap')">
+        <div class="role-icon">🪪</div>
+        <div class="role-text"><h3>Rekap Panitia</h3><p>Daftar panitia yang sudah presensi per hari</p></div>
+        <div class="role-arrow">›</div>
+      </button>
+      <button class="role-card" onclick="go('panitia-tamu-recap')">
+        <div class="role-icon">🎟️</div>
+        <div class="role-text"><h3>Rekap Tamu</h3><p>Daftar tamu undangan yang hadir</p></div>
+        <div class="role-arrow">›</div>
+      </button>
+    </div>
+  </div>`;
+}
+
+/* --- Presensi Panitia via scan --- */
+function renderPanitiaCheckinActivity(){
+  return `
+  ${topbar({eyebrow:'Presensi Panitia', title:'Pilih Hari', back:"go('panitia-home')"})}
+  <div class="content">
+    <div class="activity-list">
+      ${PANITIA_ACTIVITIES.map(a=>`
+        <div class="activity-row" onclick="go('panitia-scan',{panitiaActivity:'${a.id}'})">
+          <div class="activity-num">${PANITIA_ACTIVITIES.indexOf(a)+1}</div>
+          <div><div class="activity-name">${a.label}</div><div class="activity-sub">${a.sub}</div></div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+function renderPanitiaAutoDay(){
+  const d = state.autoScan || {nama:'',divisi:''};
+  return `
+  ${topbar({eyebrow:'Barcode terdeteksi', title:'Presensi Otomatis'})}
+  <div class="content">
+    <div class="card" style="text-align:center; margin-bottom:18px;">
+      <div style="font-size:30px; margin-bottom:6px;">🪪</div>
+      <p style="margin:0 0 3px; font-weight:800; font-size:16px;">${esc(d.nama||'-')}</p>
+      <p style="margin:0; font-size:12.5px; color:#7591A8;">${esc(d.divisi||'-')}</p>
+    </div>
+    <p class="section-label">Data terbaca dari barcode. Presensi untuk hari:</p>
+    <div class="activity-list">
+      ${PANITIA_ACTIVITIES.map(a=>`
+        <div class="activity-row" onclick="confirmAutoPanitia('${a.id}')">
+          <div class="activity-num">${PANITIA_ACTIVITIES.indexOf(a)+1}</div>
+          <div><div class="activity-name">${a.label}</div><div class="activity-sub">${a.sub}</div></div>
+        </div>`).join('')}
+    </div>
+    <div style="margin-top:14px;"><button class="btn btn-ghost" onclick="state.autoScan=null; go('home')">Batal</button></div>
+  </div>`;
+}
+function renderPanitiaScan(){
+  return `
+  ${topbar({eyebrow:'Presensi Panitia · '+panitiaActLabel(state.panitiaActivity), title:'Pindai Barcode Anda', back:"stopScanner(); go('panitia-checkin-activity')"})}
+  <div class="content">
+    <div class="scan-frame" id="panitiaScanFrame">
+      <video id="panitiaVideo" autoplay playsinline muted></video>
+      <div class="scan-target"></div>
+      <div id="panitiaScanPlaceholder" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:var(--navy); color:#fff; text-align:center; padding:24px; font-size:13px;">Tekan tombol di bawah untuk membuka kamera</div>
+    </div>
+    <p id="panitiaScanStatus" style="text-align:center; font-size:12.5px; color:#5C7B94; margin-bottom:16px;">Arahkan kamera ke barcode/kartu panitia anda.</p>
+    <button class="btn btn-primary" id="panitiaOpenCamBtn" onclick="startPanitiaScanBtn()">📷 Buka Kamera &amp; Mulai Pindai</button>
+  </div>`;
+}
+function startPanitiaScanBtn(){
+  const ph = document.getElementById('panitiaScanPlaceholder'); if(ph) ph.style.display='none';
+  const btn = document.getElementById('panitiaOpenCamBtn'); if(btn) btn.textContent='↻ Mulai Ulang Kamera';
+  startScanner('panitiaVideo','panitiaScanStatus', onPanitiaDetected);
+}
+function onPanitiaDetected(text, video){
+  stopScanner();
+  const parsed = parseScannedCode(text);
+  const photo = snapFrame(video);
+  go('panitia-confirm', {scanResult:{raw:text, ...parsed}, scanPhoto:photo});
+}
+function renderPanitiaConfirm(){
+  const r = state.scanResult||{};
+  return `
+  ${topbar({eyebrow:panitiaActLabel(state.panitiaActivity), title:'Konfirmasi Data', back:"go('panitia-scan')"})}
+  <div class="content">
+    ${state.scanPhoto ? `<div style="text-align:center; margin-bottom:16px;"><img src="${state.scanPhoto}" style="width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid var(--white);box-shadow:var(--shadow);"></div>` : ''}
+    <div class="card">
+      <div class="field" style="margin-bottom:12px;"><label>Nama</label><input type="text" value="${esc(r.nama||'(tidak terbaca)')}" readonly></div>
+      <div class="field" style="margin-bottom:0;"><label>Divisi</label><input type="text" value="${esc(r.divisi||'-')}" readonly></div>
+    </div>
+    <p style="text-align:center; font-size:11.5px; color:#93A9BC; margin:8px 0 16px;">Data terbaca otomatis dari barcode.</p>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="stopScanner(); go('panitia-scan')">Pindai Ulang</button>
+      <button class="btn btn-primary" onclick="submitPanitia()">Simpan Presensi</button>
+    </div>
+  </div>`;
+}
+async function submitPanitia(){
+  const r = state.scanResult||{};
+  const idPart = r.nama || r.raw || ('manual-'+Date.now());
+  const key = pattKey(state.panitiaActivity, idPart);
+  const existing = await storeGet(key);
+  if(existing){ toast('Anda sudah presensi untuk hari ini.'); go('panitia-checkin-success',{lastRecord:existing}); return; }
+  const record = { nama: r.nama||'Panitia', divisi: r.divisi||'', waktu: nowStr(), foto: state.scanPhoto||null, ts: Date.now() };
+  await storeSet(key, record);
+  go('panitia-checkin-success', {lastRecord:record});
+}
+function renderPanitiaCheckinSuccess(){
+  const r = state.lastRecord||{};
+  return `
+  ${topbar({eyebrow:'Presensi berhasil', title:'Tiket Panitia'})}
+  <div class="content">
+    <div class="ticket">
+      <div class="ticket-top">
+        ${r.foto?`<img class="ticket-photo" src="${r.foto}">`:`<div class="ticket-photo" style="display:flex;align-items:center;justify-content:center;font-size:22px;">👤</div>`}
+        <div><p class="ticket-name">${esc(r.nama||'')}</p><p class="ticket-class">${esc(r.divisi||'Panitia')}</p></div>
+        <div class="stamp">HADIR</div>
+      </div>
+      <div class="perforation"></div>
+      <div class="ticket-bottom">
+        <div class="ticket-field"><div class="k">Kegiatan</div><div class="v" style="font-size:12.5px;">${panitiaActLabel(state.panitiaActivity)}</div></div>
+        <div class="ticket-field"><div class="k">Waktu</div><div class="v" style="font-size:12.5px;">${r.waktu||''}</div></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="go('panitia-home')">Selesai</button>
+  </div>`;
+}
+
+/* --- Kelola Panitia (opsional, untuk catatan manual) --- */
+async function loadPanitiaList(){ const list = await storeGet('panitia:list'); return list || []; }
+async function renderKelolaPanitiaAsync(){
+  const list = await loadPanitiaList();
+  const box = document.getElementById('panitiaListBox');
+  if(!box) return;
+  if(list.length===0){ box.innerHTML = `<div class="empty-state"><div class="ic">👥</div>Belum ada catatan panitia.</div>`; return; }
+  box.innerHTML = list.map((p,i)=>`
+    <div class="student-row"><span class="student-id">P-${pad(i+1)}</span>
+    <span class="student-name">${esc(p.nama)}<br><span style="font-weight:400;font-size:11px;color:#7591A8;">${esc(p.divisi||'-')}</span></span></div>`).join('');
+}
+function renderKelolaPanitia(){
+  setTimeout(renderKelolaPanitiaAsync, 0);
+  return `
+  ${topbar({eyebrow:'Panitia', title:'Kelola Panitia', back:"go('panitia-home')"})}
+  <div class="content">
+    <div class="card">
+      <p class="section-label">Tambah Catatan</p>
+      <div class="field"><label>Nama</label><input type="text" id="pNama" placeholder="Nama panitia"></div>
+      <div class="field"><label>Divisi</label><input type="text" id="pDivisi" placeholder="cth. Acara, Konsumsi, Keamanan"></div>
+      <button class="btn btn-primary" onclick="addPanitia()">Tambah</button>
+    </div>
+    <p class="section-label">Daftar Panitia</p>
+    <div class="student-list" id="panitiaListBox"><div class="loader"><div class="spin"></div>Memuat...</div></div>
+  </div>`;
+}
+async function addPanitia(){
+  const nama = document.getElementById('pNama').value.trim();
+  const divisi = document.getElementById('pDivisi').value.trim();
+  if(!nama){ toast('Nama wajib diisi.'); return; }
+  const list = await loadPanitiaList();
+  list.push({nama,divisi,id:Date.now()});
+  await storeSet('panitia:list', list);
+  toast('Panitia ditambahkan.');
+  go('panitia-kelola');
+}
+
+/* ---------- DASBOR REKAP PESERTA ---------- */
+function renderDashboard(){
+  setTimeout(loadDashboard, 0);
+  return `
+  ${topbar({eyebrow:'Dasbor Panitia', title:'Rekap Kehadiran', back:"go('panitia-home')"})}
+  <div class="content">
+    <p class="section-label">Kegiatan</p>
+    <div class="tabbar">
+      ${ACTIVITIES.map(a=>`<div class="tab ${state.dashActivity===a.id?'active':''}" onclick="setDashActivity('${a.id}')">${a.label.split(' ').slice(0,2).join(' ')}</div>`).join('')}
+    </div>
+    <div id="dashSummary"><div class="loader"><div class="spin"></div>Menghitung rekap...</div></div>
+    <div class="divider"></div>
+    <p class="section-label">Detail per Kelas</p>
+    <div class="chip-grid" style="margin-bottom:14px;">
+      ${CLASS_ORDER.map(c=>`<button class="chip ${state.dashClass===c?'selected':''}" onclick="setDashClass('${c}')"><span class="chip-code">${c}</span><span class="chip-name">${clsLabel(c)}</span></button>`).join('')}
+    </div>
+    <div id="dashDetail"><div class="loader"><div class="spin"></div>Memuat detail...</div></div>
+  </div>`;
+}
+function setDashActivity(id){ state.dashActivity=id; go('panitia-dashboard'); }
+function setDashClass(c){ state.dashClass=c; go('panitia-dashboard'); }
+async function loadDashboard(){
+  const sumBox = document.getElementById('dashSummary');
+  const detBox = document.getElementById('dashDetail');
+  if(!sumBox) return;
+  let totalHadir=0, totalSiswa=0; const perClass=[];
+  for(const c of CLASS_ORDER){
+    const keys = await storeList(attKey(state.dashActivity,c,''));
+    const hadir = keys.length, total = STUDENTS[c].students.length;
+    totalHadir+=hadir; totalSiswa+=total; perClass.push({c,hadir,total});
+  }
+  sumBox.innerHTML = `
+    <div class="summary-bar">
+      <div class="summary-pill"><div class="num">${totalHadir}</div><div class="lbl">Hadir</div></div>
+      <div class="summary-pill"><div class="num">${totalSiswa-totalHadir}</div><div class="lbl">Belum</div></div>
+      <div class="summary-pill"><div class="num">${totalSiswa? Math.round(totalHadir/totalSiswa*100):0}%</div><div class="lbl">Persentase</div></div>
+    </div>
+    <div class="card" style="padding:10px 14px;">
+      <table class="recap"><thead><tr><th>Kelas</th><th>Hadir</th><th style="width:35%;">Progres</th></tr></thead><tbody>
+      ${perClass.map(p=>`<tr><td class="mono">${p.c}</td><td>${p.hadir}/${p.total}</td><td><div class="bar-bg"><div class="bar-fill" style="width:${p.total?Math.round(p.hadir/p.total*100):0}%;"></div></div></td></tr>`).join('')}
+      </tbody></table>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:10px;" onclick="exportCSV()">⬇ Unduh CSV Kegiatan Ini</button>
+  `;
+  if(!detBox) return;
+  const keys = await storeList(attKey(state.dashActivity, state.dashClass, ''));
+  const records = await Promise.all(keys.map(k=>storeGet(k)));
+  const valid = records.filter(Boolean).sort((a,b)=>a.no-b.no);
+  const total = STUDENTS[state.dashClass].students.length;
+  if(valid.length===0){ detBox.innerHTML = `<div class="empty-state"><div class="ic">🗒️</div>Belum ada peserta ${clsLabel(state.dashClass)} yang presensi untuk kegiatan ini.</div>`; return; }
+  detBox.innerHTML = `<p style="font-size:12px; color:#7591A8; margin:0 0 10px;">${valid.length} dari ${total} siswa sudah hadir</p>
+    <div class="gallery">${valid.map(r=>`<div class="g-item">${r.foto?`<img src="${r.foto}">`:`<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:22px;">👤</div>`}<div class="g-name">${esc(r.nama.split(' ')[0])}</div></div>`).join('')}</div>`;
+}
+async function exportCSV(){
+  toast('Menyiapkan file CSV...');
+  let rows = [['ID','Nama','Kelas','Kegiatan','Waktu']];
+  for(const c of CLASS_ORDER){
+    const keys = await storeList(attKey(state.dashActivity,c,''));
+    const records = await Promise.all(keys.map(k=>storeGet(k)));
+    records.filter(Boolean).sort((a,b)=>a.no-b.no).forEach(r=>{
+      rows.push([studentId(c,r.no), r.nama, clsLabel(c), actLabel(state.dashActivity), r.waktu]);
+    });
+  }
+  const csv = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='presensi_'+state.dashActivity+'.csv';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+/* ---------- REKAP TAMU ---------- */
+function renderTamuRecapScreen(){
+  setTimeout(loadTamuRecap,0);
+  return `
+  ${topbar({eyebrow:'Panitia', title:'Rekap Tamu', back:"go('panitia-home')"})}
+  <div class="content"><div id="tamuList"><div class="loader"><div class="spin"></div>Memuat...</div></div></div>`;
+}
+async function loadTamuRecap(){
+  const box = document.getElementById('tamuList');
+  if(!box) return;
+  const keys = await storeList('tamu:');
+  const records = await Promise.all(keys.map(k=>storeGet(k)));
+  const valid = records.filter(Boolean).sort((a,b)=>b.ts-a.ts);
+  if(valid.length===0){ box.innerHTML = `<div class="empty-state"><div class="ic">🎟️</div>Belum ada tamu tercatat.</div>`; return; }
+  box.innerHTML = `<p style="font-size:12px;color:#7591A8;margin:0 0 10px;">${valid.length} tamu hadir</p>` + valid.map(r=>{
+    const fields = r.fields||[];
+    const headline = fields[0] ? fields[0].value : '-';
+    const rest = fields.slice(1).map(f=>f.value).filter(Boolean).join(' · ');
+    return `
+    <div class="student-row" style="margin-bottom:8px;">
+      ${r.foto?`<img src="${r.foto}" style="width:40px;height:40px;border-radius:10px;object-fit:cover;">`:`<span class="student-id">🎪</span>`}
+      <span class="student-name">${esc(headline)}<br><span style="font-weight:400;font-size:11px;color:#7591A8;">${esc(rest)}${rest?' · ':''}${r.waktu}</span></span>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- REKAP PANITIA ---------- */
+function renderPanitiaRecapScreen(){
+  if(!state.dashPanitiaAct) state.dashPanitiaAct = PANITIA_ACTIVITIES[0].id;
+  setTimeout(loadPanitiaRecap,0);
+  return `
+  ${topbar({eyebrow:'Panitia', title:'Rekap Panitia', back:"go('panitia-home')"})}
+  <div class="content">
+    <div class="tabbar">${PANITIA_ACTIVITIES.map(a=>`<div class="tab ${state.dashPanitiaAct===a.id?'active':''}" onclick="setDashPanitiaAct('${a.id}')">${a.label}</div>`).join('')}</div>
+    <div id="panitiaRecapList"><div class="loader"><div class="spin"></div>Memuat...</div></div>
+  </div>`;
+}
+function setDashPanitiaAct(id){ state.dashPanitiaAct=id; go('panitia-panitia-recap'); }
+async function loadPanitiaRecap(){
+  const box = document.getElementById('panitiaRecapList');
+  if(!box) return;
+  const keys = await storeList('patt:'+state.dashPanitiaAct+':');
+  const pairs = await Promise.all(keys.map(async k=>({key:k, record:await storeGet(k)})));
+  const valid = pairs.filter(p=>p.record).sort((a,b)=>b.record.ts-a.record.ts);
+  if(valid.length===0){ box.innerHTML = `<div class="empty-state"><div class="ic">🪪</div>Belum ada panitia yang presensi untuk hari ini.</div>`; return; }
+  box.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <p style="font-size:12px;color:#7591A8; margin:0;">${valid.length} panitia hadir</p>
+      <button style="border:1.5px solid #C0392B; background:var(--white); color:#C0392B; font-size:11px; font-weight:700; padding:6px 12px; border-radius:10px; cursor:pointer;" onclick="clearAllPanitiaRecap()">🗑 Hapus Semua</button>
+    </div>` + valid.map(p=>{
+      const r = p.record;
+      return `
+    <div class="student-row" style="margin-bottom:8px;">
+      ${r.foto?`<img src="${r.foto}" style="width:40px;height:40px;border-radius:10px;object-fit:cover;">`:`<span class="student-id">👤</span>`}
+      <span class="student-name">${esc(r.nama)}<br><span style="font-weight:400;font-size:11px;color:#7591A8;">${esc(r.divisi||'-')} · ${r.waktu}</span></span>
+      <span class="icon-btn" style="color:#C0392B;" onclick="deletePanitiaRecap('${p.key.replace(/'/g,"")}')">🗑</span>
+    </div>`;}).join('');
+}
+async function deletePanitiaRecap(key){
+  await storeDelete(key);
+  toast('Data presensi dihapus.');
+  loadPanitiaRecap();
+}
+async function clearAllPanitiaRecap(){
+  const keys = await storeList('patt:'+state.dashPanitiaAct+':');
+  for(const k of keys){ await storeDelete(k); }
+  toast('Semua data presensi hari ini dihapus.');
+  loadPanitiaRecap();
+}
+
+/* ---------- INIT ---------- */
+(async function init(){
+  const auto = getUrlAutoCheckin();
+  if(auto) applyAutoCheckin(auto);
+  render();
+  await detectStorageMode();
+  render();
+})();
+</script>
+</body>
+</html>
