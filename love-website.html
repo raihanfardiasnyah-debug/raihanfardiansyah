@@ -454,7 +454,7 @@
   <div class="eyebrow">a little something</div>
   <h1>for my love</h1>
   <p class="subtitle">satu kejutan kecil menantimu di balik hati ini</p>
-  <div class="qr-wrap" onclick="goTo('screen-code')">
+  <div class="qr-wrap" onclick="goTo('screen-letter')">
     <div class="qr-ring"></div>
     <div class="heart-clip"></div>
   </div>
@@ -462,15 +462,6 @@
   <div class="deco-row">🤍 ✧ 🤍</div>
 </div>
  
-<!-- SCREEN 1: BOUQUET + PASSCODE -->
-<div class="screen" id="screen-code">
-  <div class="bouquet" id="bouquet"></div>
-  <h2>Before you continue...</h2>
-  <div class="sub">enter our little code</div>
-  <div class="code-boxes" id="codeBoxes"></div>
-  <div id="code-error">wrong code, try again 🤍</div>
-  <button class="enter-btn" onclick="checkCode()">Unlock</button>
-</div>
  
 <!-- SCREEN 2: LETTER -->
 <div class="screen" id="screen-letter">
@@ -478,7 +469,7 @@
     <div class="letter-box">
       <div class="deco">🤍 ✧ 🤍</div>
       <p id="letterText"></p>
-      <div class="signoff">Terima kasih, sayang. 🤍</div>
+      <div class="signoff">Maaf ya, sayang. 🤍</div>
     </div>
     <button class="next-btn" onclick="goTo('screen-final')">continue →</button>
   </div>
@@ -489,7 +480,7 @@
   <div class="glow-orb"></div>
   <div class="final-stage">
     <div class="love-text">I Love You <span class="beat">🤍</span></div>
-    <div class="tiny">now, tomorrow, and always</div>
+    <div class="tiny">maaf ya, dan makasih udah selalu sabar</div>
     <button class="restart-btn" onclick="goTo('screen-entry')">↺ replay</button>
   </div>
 </div>
@@ -499,17 +490,15 @@
 /* Ganti kode rahasia di bawah ini (6 digit angka) sesuai keinginanmu */
 const SECRET_CODE = "123456";
  
-const letterContent = `Terima kasih sudah menerimaku, dengan segala kekuranganku, sampai detik ini.
+const letterContent = `Sayang, aku minta maaf ya.
  
-Aku tahu perjalanan kita tidak selalu mulus. Ada saat-saat kita sama-sama lelah, ada saat-saat salah paham membuat hati jadi berat. Tapi di setiap langkah itu, kamu tetap memilih untuk bertahan, dan itu adalah hal paling berharga yang pernah aku terima dari siapapun.
+Aku tahu tadi kamu kecewa waktu kita lagi mabar bareng, tapi foto profilku bukan foto couple kita. Aku ngerti kenapa kamu jadi ngerasa gak enak, dan itu wajar banget, aku juga akan merasa hal yang sama kalau di posisi kamu.
  
-Aku berjanji, aku tidak akan meninggalkanmu. Bukan hanya di saat semuanya baik-baik saja, tapi juga di saat semuanya terasa sulit. Aku ingin menjadi tempat pulang yang selalu ada, bukan sekadar orang yang datang lalu pergi.
+Sebenarnya tadi akunku sempat dipinjam adikku, dan tanpa aku tahu, dia yang mengganti foto profilnya. Aku baru sadar setelah kamu bilang. Tapi aku sadar, sepenting apapun alasannya, yang paling penting itu perasaan kamu, dan aku minta maaf karena sudah membuat kamu merasa nomor dua atau merasa gak diperhatikan.
  
-Sayang, jangan takut lagi ya. Tidak perlu takut kehilangan, tidak perlu takut sendirian, karena aku ada di sini, dan aku akan terus ada. Kamu tidak perlu membuktikan apa-apa untuk pantas dicintai, kamu sudah cukup, apa adanya kamu.
+Kamu itu berharga banget buat aku, dan foto profil cuma hal kecil dibanding rasa sayangku ke kamu. Aku janji akan lebih hati-hati dan lebih peka lagi ke depannya, biar kejadian seperti ini gak bikin kamu sedih lagi.
  
-Terima kasih untuk setiap kepercayaan yang kamu berikan, untuk setiap kesempatan kedua, dan untuk hati yang kamu jaga sebaik ini untukku. Aku sayang kamu, hari ini, esok, dan di setiap hari sesudahnya.
- 
-Terima kasih, sayang. I love you.`;
+Maafin aku ya, sayang. Aku sayang kamu, dan aku gak mau kamu ragu sama itu.`;
  
 document.getElementById('letterText').textContent = letterContent;
  
@@ -517,7 +506,6 @@ document.getElementById('letterText').textContent = letterContent;
 function goTo(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id === 'screen-code') buildBouquet();
   if(id === 'screen-final') buildRisingHearts();
 }
  
@@ -538,80 +526,6 @@ function buildRisingHearts(){
     h.style.fontSize = (12 + Math.random()*10) + 'px';
     screen.appendChild(h);
   }
-}
- 
-/* ============ PASSCODE BOXES ============ */
-const codeBoxes = document.getElementById('codeBoxes');
-for(let i=0;i<6;i++){
-  const inp = document.createElement('input');
-  inp.setAttribute('maxlength','1');
-  inp.setAttribute('inputmode','numeric');
-  inp.setAttribute('type','tel');
-  inp.addEventListener('input', (e)=>{
-    e.target.value = e.target.value.replace(/[^0-9]/g,'');
-    if(e.target.value && inp.nextElementSibling){
-      inp.nextElementSibling.focus();
-    }
-  });
-  inp.addEventListener('keydown', (e)=>{
-    if(e.key === 'Backspace' && !e.target.value && inp.previousElementSibling){
-      inp.previousElementSibling.focus();
-    }
-    if(e.key === 'Enter'){ checkCode(); }
-  });
-  codeBoxes.appendChild(inp);
-}
- 
-function checkCode(){
-  const inputs = [...codeBoxes.querySelectorAll('input')];
-  const value = inputs.map(i=>i.value).join('');
-  const errorEl = document.getElementById('code-error');
-  if(value.length < 6){
-    errorEl.textContent = 'isi semua 6 kotak ya 🤍';
-    errorEl.classList.add('show');
-    return;
-  }
-  if(value === SECRET_CODE){
-    errorEl.classList.remove('show');
-    goTo('screen-letter');
-  } else {
-    errorEl.textContent = 'wrong code, try again 🤍';
-    errorEl.classList.add('show');
-    inputs.forEach(i=>i.value='');
-    inputs[0].focus();
-  }
-}
- 
-/* ============ BOUQUET BUILD ============ */
-const flowerEmojis = ['🌷','🌸','🌹','🌼','💐'];
-function buildBouquet(){
-  const bq = document.getElementById('bouquet');
-  if(bq.dataset.built) return;
-  bq.dataset.built = "1";
-  const positions = [
-    {x:130,y:120,rot:-8,delay:0.05,size:38},
-    {x:95,y:140,rot:-18,delay:0.15,size:32},
-    {x:165,y:140,rot:16,delay:0.25,size:32},
-    {x:70,y:170,rot:-28,delay:0.35,size:28},
-    {x:190,y:170,rot:26,delay:0.45,size:28},
-    {x:110,y:95,rot:-4,delay:0.55,size:30},
-    {x:150,y:95,rot:6,delay:0.65,size:30},
-    {x:130,y:160,rot:2,delay:0.75,size:34},
-  ];
-  positions.forEach((p,idx)=>{
-    const f = document.createElement('div');
-    f.className = 'flower';
-    f.textContent = flowerEmojis[idx % flowerEmojis.length];
-    f.style.left = p.x + 'px';
-    f.style.top = p.y + 'px';
-    f.style.setProperty('--rot', p.rot + 'deg');
-    f.style.animationDelay = p.delay + 's, ' + (1 + p.delay) + 's';
-    f.style.fontSize = p.size + 'px';
-    bq.appendChild(f);
-  });
-  const stem = document.createElement('div');
-  stem.className = 'stem';
-  bq.appendChild(stem);
 }
  
 /* ============ AMBIENT PETALS + BUTTERFLIES ============ */
