@@ -6,7 +6,7 @@
 <title>For You 🤍</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Great+Vibes&family=Poppins:wght@300;400;500&display=swap');
-
+ 
   :root{
     --bg:#0a0a0c;
     --bg2:#111114;
@@ -16,9 +16,9 @@
     --white:#f5f0eb;
     --dim:#8a8590;
   }
-
+ 
   *{margin:0;padding:0;box-sizing:border-box;}
-
+ 
   html,body{
     height:100%;
     height:100dvh;
@@ -29,7 +29,7 @@
     position:fixed;
     width:100%;
   }
-
+ 
   .screen{
     position:fixed;
     inset:0;
@@ -48,7 +48,7 @@
     padding:24px;
   }
   .screen.active{display:flex;}
-
+ 
   /* ---------- floating petals & butterflies (global ambience) ---------- */
   .ambience{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;}
   .petal{
@@ -77,27 +77,77 @@
     50%{transform:translate(60px,10px) rotate(-8deg);}
     75%{transform:translate(20px,50px) rotate(6deg);}
   }
-
+ 
   h1,h2,h3{font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:1px;}
-
+ 
   /* ---------- SCREEN 0 : QR ENTRY ---------- */
-  #screen-entry .qr-wrap{
-    position:relative;
-    width:220px;
-    height:220px;
-    cursor:pointer;
+  #screen-entry{
+    padding:30px 24px;
+  }
+  #screen-entry .frame-line{
+    position:absolute;
+    inset:18px;
+    border:1px solid rgba(212,175,140,0.18);
+    pointer-events:none;
+    z-index:1;
+  }
+  #screen-entry .eyebrow{
+    font-size:11px;
+    letter-spacing:5px;
+    text-transform:uppercase;
+    color:var(--gold);
+    opacity:0.85;
+    margin-bottom:10px;
     z-index:2;
   }
+  #screen-entry h1{
+    font-size:clamp(26px,7vw,36px);
+    color:var(--white);
+    margin-bottom:6px;
+    letter-spacing:1px;
+    font-family:'Great Vibes',cursive;
+    font-weight:400;
+    z-index:2;
+  }
+  #screen-entry .subtitle{
+    font-family:'Cormorant Garamond',serif;
+    font-style:italic;
+    font-size:15px;
+    color:var(--dim);
+    margin-bottom:34px;
+    max-width:280px;
+    line-height:1.6;
+    z-index:2;
+  }
+  #screen-entry .qr-wrap{
+    position:relative;
+    width:210px;
+    height:210px;
+    cursor:pointer;
+    z-index:2;
+    margin-bottom:22px;
+  }
+  .qr-ring{
+    position:absolute;
+    inset:-16px;
+    border:1px dashed rgba(212,175,140,0.4);
+    border-radius:50%;
+    animation:spinSlow 18s linear infinite;
+  }
+  @keyframes spinSlow{
+    from{transform:rotate(0deg);}
+    to{transform:rotate(360deg);}
+  }
   .heart-clip{
-    width:220px;
-    height:220px;
-    clip-path: path('M110 200 C20 140 -10 80 30 45 C58 20 95 30 110 60 C125 30 162 20 190 45 C230 80 200 140 110 200 Z');
+    width:210px;
+    height:210px;
+    clip-path: path('M105 190 C19 133 -10 76 29 43 C55 19 90 29 105 57 C120 29 155 19 181 43 C220 76 191 133 105 190 Z');
     background:
       repeating-linear-gradient(0deg, var(--gold) 0 6px, transparent 6px 12px),
       repeating-linear-gradient(90deg, var(--gold) 0 6px, transparent 6px 12px);
     background-blend-mode:screen;
     background-color:#1a1a1e;
-    box-shadow:0 0 40px rgba(212,175,140,0.35);
+    box-shadow:0 0 45px rgba(212,175,140,0.4);
     animation:pulseHeart 2.4s ease-in-out infinite;
   }
   @keyframes pulseHeart{
@@ -105,22 +155,26 @@
     50%{transform:scale(1.05);filter:brightness(1.25);}
   }
   #screen-entry p.hint{
-    margin-top:28px;
     color:var(--dim);
-    font-size:13px;
+    font-size:12px;
     letter-spacing:2px;
     text-transform:uppercase;
+    z-index:2;
+    animation:hintPulse 2s ease-in-out infinite;
   }
-  #screen-entry h1{
-    font-size:20px;
+  @keyframes hintPulse{
+    0%,100%{opacity:0.5;}
+    50%{opacity:1;}
+  }
+  #screen-entry .deco-row{
+    margin-top:26px;
+    font-size:15px;
+    letter-spacing:10px;
     color:var(--rose);
-    margin-bottom:18px;
-    letter-spacing:3px;
-    text-transform:uppercase;
-    font-family:'Poppins',sans-serif;
-    font-weight:300;
+    opacity:0.6;
+    z-index:2;
   }
-
+ 
   /* ---------- SCREEN 1 : BOUQUET + PASSCODE ---------- */
   .bouquet{
     position:relative;
@@ -150,7 +204,7 @@
     0%,100%{transform:rotate(var(--rot,0deg)) translateY(0);}
     50%{transform:rotate(calc(var(--rot,0deg) + 3deg)) translateY(-4px);}
   }
-
+ 
   #screen-code h2{
     font-size:26px;
     color:var(--white);
@@ -207,7 +261,7 @@
     transition:all .3s;
   }
   .enter-btn:hover{background:var(--gold);color:#0a0a0c;}
-
+ 
   /* ---------- SCREEN 2 : LETTER ---------- */
   #screen-letter{
     align-items:center;
@@ -262,7 +316,7 @@
     z-index:2;
   }
   .next-btn:hover{background:var(--rose);color:#0a0a0c;}
-
+ 
   /* ---------- SCREEN 3 : I LOVE YOU ---------- */
   #screen-final{
     position:relative;
@@ -357,7 +411,7 @@
     animation:fadeUp 1.6s ease-out 1.2s both;
   }
   .restart-btn:hover{background:var(--lilac);color:#0a0a0c;}
-
+ 
   .rising-heart{
     position:absolute;
     bottom:-10%;
@@ -372,7 +426,7 @@
     88%{opacity:0.6;}
     100%{transform:translateY(-115vh) translateX(var(--drift,20px)) scale(1.1);opacity:0;}
   }
-
+ 
   .sparkle{
     position:absolute;
     color:var(--gold);
@@ -384,25 +438,30 @@
     0%,100%{opacity:0.2;transform:scale(0.8);}
     50%{opacity:1;transform:scale(1.2);}
   }
-
+ 
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important;}
   }
 </style>
 </head>
 <body>
-
+ 
 <div class="ambience" id="ambience"></div>
-
+ 
 <!-- SCREEN 0: QR ENTRY -->
 <div class="screen active" id="screen-entry">
-  <h1>tap the heart to open</h1>
+  <div class="frame-line"></div>
+  <div class="eyebrow">a little something</div>
+  <h1>for my love</h1>
+  <p class="subtitle">satu kejutan kecil menantimu di balik hati ini</p>
   <div class="qr-wrap" onclick="goTo('screen-code')">
+    <div class="qr-ring"></div>
     <div class="heart-clip"></div>
   </div>
-  <p class="hint">a little something for you</p>
+  <p class="hint">tap the heart to open</p>
+  <div class="deco-row">🤍 ✧ 🤍</div>
 </div>
-
+ 
 <!-- SCREEN 1: BOUQUET + PASSCODE -->
 <div class="screen" id="screen-code">
   <div class="bouquet" id="bouquet"></div>
@@ -412,7 +471,7 @@
   <div id="code-error">wrong code, try again 🤍</div>
   <button class="enter-btn" onclick="checkCode()">Unlock</button>
 </div>
-
+ 
 <!-- SCREEN 2: LETTER -->
 <div class="screen" id="screen-letter">
   <div style="display:flex;flex-direction:column;align-items:center;max-height:100%;">
@@ -424,7 +483,7 @@
     <button class="next-btn" onclick="goTo('screen-final')">continue →</button>
   </div>
 </div>
-
+ 
 <!-- SCREEN 3: I LOVE YOU -->
 <div class="screen" id="screen-final">
   <div class="glow-orb"></div>
@@ -434,24 +493,26 @@
     <button class="restart-btn" onclick="goTo('screen-entry')">↺ replay</button>
   </div>
 </div>
-
+ 
 <script>
 /* ============ CONFIG ============ */
 /* Ganti kode rahasia di bawah ini (6 digit angka) sesuai keinginanmu */
 const SECRET_CODE = "123456";
-
-const letterContent = `Terima kasih sudah hadir di kehidupanku.
-
-Dari sekian banyak orang yang bisa aku temui di dunia ini, aku bersyukur bisa menemukanmu. Kamu datang di waktu yang tepat, membawa warna yang tidak pernah aku bayangkan sebelumnya. Bersamamu, hari-hari biasa terasa jauh lebih berarti.
-
-Terima kasih untuk setiap tawa yang kamu bagi, setiap cerita kecil yang kamu ceritakan, dan setiap kesabaran yang kamu berikan untukku. Terima kasih karena selalu ada, bahkan di saat-saat aku sedang tidak baik-baik saja.
-
-Aku tidak butuh sesuatu yang mewah untuk merasa bahagia, cukup tahu bahwa kamu ada dan kita saling memiliki, itu sudah lebih dari cukup. Semoga aku bisa terus menjadi orang yang membuatmu merasa dicintai, dihargai, dan tidak pernah sendirian.
-
-Terima kasih sudah memilih untuk tetap tinggal, untuk terus berjuang bersama, dan untuk menjadi bagian dari ceritaku. Aku bersyukur untukmu, hari ini dan selamanya.`;
-
+ 
+const letterContent = `Terima kasih sudah menerimaku, dengan segala kekuranganku, sampai detik ini.
+ 
+Aku tahu perjalanan kita tidak selalu mulus. Ada saat-saat kita sama-sama lelah, ada saat-saat salah paham membuat hati jadi berat. Tapi di setiap langkah itu, kamu tetap memilih untuk bertahan, dan itu adalah hal paling berharga yang pernah aku terima dari siapapun.
+ 
+Aku berjanji, aku tidak akan meninggalkanmu. Bukan hanya di saat semuanya baik-baik saja, tapi juga di saat semuanya terasa sulit. Aku ingin menjadi tempat pulang yang selalu ada, bukan sekadar orang yang datang lalu pergi.
+ 
+Sayang, jangan takut lagi ya. Tidak perlu takut kehilangan, tidak perlu takut sendirian, karena aku ada di sini, dan aku akan terus ada. Kamu tidak perlu membuktikan apa-apa untuk pantas dicintai, kamu sudah cukup, apa adanya kamu.
+ 
+Terima kasih untuk setiap kepercayaan yang kamu berikan, untuk setiap kesempatan kedua, dan untuk hati yang kamu jaga sebaik ini untukku. Aku sayang kamu, hari ini, esok, dan di setiap hari sesudahnya.
+ 
+Terima kasih, sayang. I love you.`;
+ 
 document.getElementById('letterText').textContent = letterContent;
-
+ 
 /* ============ SCREEN NAV ============ */
 function goTo(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -459,7 +520,7 @@ function goTo(id){
   if(id === 'screen-code') buildBouquet();
   if(id === 'screen-final') buildRisingHearts();
 }
-
+ 
 /* ============ RISING HEARTS ON FINAL SCREEN ============ */
 function buildRisingHearts(){
   const screen = document.getElementById('screen-final');
@@ -478,7 +539,7 @@ function buildRisingHearts(){
     screen.appendChild(h);
   }
 }
-
+ 
 /* ============ PASSCODE BOXES ============ */
 const codeBoxes = document.getElementById('codeBoxes');
 for(let i=0;i<6;i++){
@@ -500,7 +561,7 @@ for(let i=0;i<6;i++){
   });
   codeBoxes.appendChild(inp);
 }
-
+ 
 function checkCode(){
   const inputs = [...codeBoxes.querySelectorAll('input')];
   const value = inputs.map(i=>i.value).join('');
@@ -520,7 +581,7 @@ function checkCode(){
     inputs[0].focus();
   }
 }
-
+ 
 /* ============ BOUQUET BUILD ============ */
 const flowerEmojis = ['🌷','🌸','🌹','🌼','💐'];
 function buildBouquet(){
@@ -552,7 +613,7 @@ function buildBouquet(){
   stem.className = 'stem';
   bq.appendChild(stem);
 }
-
+ 
 /* ============ AMBIENT PETALS + BUTTERFLIES ============ */
 const ambience = document.getElementById('ambience');
 const petalEmojis = ['🌸','🌺','🌷','💮'];
@@ -588,3 +649,4 @@ for(let i=0;i<20;i++){
 </script>
 </body>
 </html>
+ 
